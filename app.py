@@ -2,7 +2,7 @@ import os
 import sqlite3
 import math
 from datetime import datetime, timedelta
-from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session, send_file
 from werkzeug.security import check_password_hash
 from database import get_db_connection, init_db, hash_pwd
 
@@ -678,6 +678,16 @@ def api_compatibility(blood_group):
         'can_receive_from': COMPATIBILITY['recipient_can_receive_from'][group],
         'can_donate_to': COMPATIBILITY['donor_can_give_to'][group]
     })
+
+@app.route('/report')
+def project_report():
+    report_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'LifePulse_Project_Report.html')
+    return send_file(report_path)
+
+@app.route('/download-report')
+def download_project_report():
+    report_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'LifePulse_Project_Report.html')
+    return send_file(report_path, as_attachment=True, download_name='LifePulse_College_Project_Report.html')
 
 if __name__ == '__main__':
     print("\n" + "="*60)

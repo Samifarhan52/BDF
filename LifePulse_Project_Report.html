@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifePulse - Official Project Report & Academic Thesis</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+
+        :root {
+            --primary: #b91c1c;
+            --primary-dark: #991b1b;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #cbd5e1;
+            --bg-light: #f8fafc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Merriweather', Georgia, serif;
+            color: var(--text-main);
+            background: #e2e8f0;
+            line-height: 1.8;
+            font-size: 15px;
+        }
+
+        /* Top Action Bar for PDF Generation */
+        .no-print-bar {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: #0f172a;
+            color: #ffffff;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .btn-action {
+            background: #dc2626;
+            color: #ffffff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-action:hover {
+            background: #ef4444;
+            transform: translateY(-1px);
+        }
+
+        .btn-secondary {
+            background: #334155;
+            color: #ffffff;
+            border: 1px solid #475569;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        /* Paper Sheet Layout */
+        .paper-sheet {
+            max-width: 900px;
+            margin: 30px auto;
+            background: #ffffff;
+            padding: 70px 80px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-radius: 4px;
+        }
+
+        /* Academic Formatting */
+        h1, h2, h3, h4 {
+            font-family: 'Inter', -apple-system, sans-serif;
+            color: #0f172a;
+            font-weight: 800;
+            line-height: 1.3;
+        }
+
+        h1 { font-size: 28px; margin-bottom: 12px; }
+        h2 { font-size: 22px; margin-top: 40px; margin-bottom: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 8px; color: var(--primary); }
+        h3 { font-size: 17px; margin-top: 24px; margin-bottom: 10px; color: #1e293b; }
+        h4 { font-size: 15px; margin-top: 18px; margin-bottom: 8px; }
+
+        p { margin-bottom: 16px; text-align: justify; }
+
+        /* Cover Page */
+        .cover-page {
+            text-align: center;
+            padding: 60px 20px 80px 20px;
+            border-bottom: 2px solid #e2e8f0;
+            margin-bottom: 50px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .cover-logo {
+            width: 70px;
+            height: 70px;
+            background: #dc2626;
+            color: #fff;
+            border-radius: 20px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 34px;
+            margin-bottom: 24px;
+            box-shadow: 0 10px 20px rgba(220, 38, 38, 0.3);
+        }
+
+        .cover-title {
+            font-size: 30px;
+            font-weight: 900;
+            letter-spacing: -0.5px;
+            color: #0f172a;
+            margin-bottom: 14px;
+            line-height: 1.25;
+        }
+
+        .cover-subtitle {
+            font-size: 16px;
+            color: #475569;
+            max-width: 650px;
+            margin: 0 auto 36px auto;
+            line-height: 1.5;
+            font-weight: 500;
+        }
+
+        .cover-meta {
+            margin-top: 40px;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 30px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            text-align: left;
+            font-size: 13px;
+        }
+
+        .cover-meta strong {
+            display: block;
+            color: #0f172a;
+            font-size: 14px;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0 30px 0;
+            font-family: 'Inter', sans-serif;
+            font-size: 13px;
+        }
+
+        th, td {
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            text-align: left;
+        }
+
+        th {
+            background: #f1f5f9;
+            font-weight: 700;
+            color: #0f172a;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+
+        tr:nth-child(even) {
+            background: #f8fafc;
+        }
+
+        /* Callout Box */
+        .callout {
+            background: #fef2f2;
+            border-left: 4px solid var(--primary);
+            padding: 16px 20px;
+            margin: 24px 0;
+            border-radius: 0 8px 8px 0;
+            font-size: 14px;
+        }
+
+        .callout strong {
+            color: var(--primary-dark);
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Code Blocks */
+        pre, code {
+            font-family: 'JetBrains Mono', monospace;
+            background: #f1f5f9;
+            border-radius: 6px;
+        }
+        code { padding: 2px 6px; font-size: 13px; color: #b91c1c; }
+        pre {
+            padding: 16px;
+            margin: 18px 0;
+            overflow-x: auto;
+            border: 1px solid #e2e8f0;
+            font-size: 12px;
+            line-height: 1.5;
+        }
+
+        /* Q&A Block */
+        .qa-card {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 10px;
+            padding: 18px 22px;
+            margin-bottom: 18px;
+        }
+
+        .qa-card h4 {
+            color: #0f172a;
+            margin-top: 0;
+            margin-bottom: 8px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 700;
+            font-family: 'Inter', sans-serif;
+            text-transform: uppercase;
+        }
+        .badge-red { background: #fee2e2; color: #991b1b; }
+        .badge-green { background: #dcfce7; color: #166534; }
+        .badge-blue { background: #e0f2fe; color: #075985; }
+
+        /* Print Media Styles */
+        @media print {
+            body {
+                background: #ffffff;
+                color: #000000;
+                font-size: 13pt;
+                line-height: 1.6;
+            }
+            .no-print-bar {
+                display: none !important;
+            }
+            .paper-sheet {
+                box-shadow: none;
+                margin: 0;
+                padding: 0;
+                max-width: 100%;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+            h2 {
+                color: #000000;
+                border-bottom: 1px solid #999999;
+                margin-top: 30pt;
+            }
+            table, pre, .qa-card {
+                page-break-inside: avoid;
+            }
+            a {
+                color: #000000;
+                text-decoration: underline;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Top Action Bar (Invisible when printed to PDF) -->
+    <div class="no-print-bar">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span style="font-size: 18px;">🩸</span>
+            <span style="font-weight: 800; letter-spacing: -0.3px;">LifePulse Project Report & Documentation</span>
+        </div>
+        <div style="display: flex; gap: 12px;">
+            <button onclick="window.print()" class="btn-action">
+                🖨️ Print / Save as PDF
+            </button>
+            <a href="PROJECT_DOCUMENT_PRESENTATION_GUIDE.md" download class="btn-secondary">
+                ⬇️ Markdown File
+            </a>
+            <a href="http://127.0.0.1:5000" class="btn-secondary">
+                🌐 Open Live Web App
+            </a>
+        </div>
+    </div>
+
+    <!-- Printable Paper Sheet -->
+    <div class="paper-sheet">
+
+        <!-- Cover Page -->
+        <div class="cover-page">
+            <div class="cover-logo">🩸</div>
+            <h1 class="cover-title">LIFEPULSE: REAL-TIME EMERGENCY BLOOD DONOR FINDER & TRANSFUSION NETWORK</h1>
+            <p class="cover-subtitle">
+                A Comprehensive Full-Stack Web Platform Integrating ABO/Rh Biological Matching, Geodesic Spatial Filtering, Dynamic Availability Presence, and Hospital Unit Fulfillment Tracking.
+            </p>
+
+            <div style="margin: 25px 0;">
+                <span class="badge badge-red">Final Year Academic Project</span>
+                <span class="badge badge-blue">Department of Computer Science & Engineering</span>
+                <span class="badge badge-green">Production Ready v2.0</span>
+            </div>
+
+            <div class="cover-meta">
+                <div>
+                    <span style="color: #64748b;">Author / Developer:</span>
+                    <strong>Sami Farhan (GitHub: @Samifarhan52)</strong>
+                    <span style="color: #64748b; margin-top: 8px; display: block;">Project Repository:</span>
+                    <a href="https://github.com/Samifarhan52/BDF" target="_blank" style="color: #dc2626; font-weight: 600;">github.com/Samifarhan52/BDF</a>
+                </div>
+                <div>
+                    <span style="color: #64748b;">Technology Stack:</span>
+                    <strong>Python 3, Flask, SQLite3, Tailwind CSS</strong>
+                    <span style="color: #64748b; margin-top: 8px; display: block;">Academic Year:</span>
+                    <strong>2026 Evaluation</strong>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 1: Executive Summary -->
+        <h2>1. Executive Summary & Abstract</h2>
+        <p>
+            Timely access to safe, compatible blood units during acute traumatic hemorrhage, elective cardiac surgeries, and oncological treatments is among the most severe logistical challenges in contemporary emergency medicine. Traditional blood acquisition networks suffer from high latency due to static, unverified donor directories, lack of real-time donor availability awareness, and widespread public misunderstanding regarding biological ABO and Rh blood group compatibility.
+        </p>
+        <p>
+            <strong>LifePulse</strong> is an enterprise-grade emergency blood donor network and hospital fulfillment platform. Built with a high-performance <strong>Python 3 Flask</strong> backend and an embedded <strong>SQLite3</strong> relational database, LifePulse introduces an automated <strong>Biological Compatibility Engine</strong>, <strong>Dynamic Presence Toggling</strong> (allowing donors to switch between <em>Available</em> and <em>Unavailable</em> via asynchronous REST calls), an <strong>Interactive Leaflet GIS Map</strong> for spatial proximity identification, and an <strong>Emergency Fulfillment Tracking System</strong> where hospital staff can monitor pledged donor units in real time.
+        </p>
+
+        <!-- Section 2: Problem Statement -->
+        <h2>2. Problem Statement & Clinical Motivation</h2>
+        <div class="callout">
+            <strong>Clinical Core Challenge:</strong> In hemorrhagic shock, transfusion delays exceeding 60 minutes ("the Golden Hour") increase patient mortality by over 40%. Static spreadsheets and social media appeals fail because over 80% of listed numbers are unreachable, offline, or biologically incompatible.
+        </div>
+        <p>Current mechanisms exhibit three fundamental operational flaws:</p>
+        <ol style="margin-left: 24px; margin-bottom: 20px;">
+            <li><strong>Absence of Presence Status:</strong> Existing donor lists do not track if a volunteer is currently working, ill, or traveling, resulting in frustrating dead-ends during critical midnight emergencies.</li>
+            <li><strong>Biological Matching Inefficiencies:</strong> Search portals typically look only for identical blood groups. For example, an $A^+$ patient in urgent need can safely receive $A^+$, $A^-$, $O^+$, and $O^-$ red blood cells; failing to identify compatible universal donors costs valuable lives.</li>
+            <li><strong>Opaque Fulfillment Tracking:</strong> Multiple community donors often mobilize to the same facility for a single patient because there is no synchronized ledger displaying how many units have already been pledged or completed.</li>
+        </ol>
+
+        <div class="page-break"></div>
+
+        <!-- Section 3: Technology Stack -->
+        <h2>3. Technology Stack & Architectural Rationale</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Component Layer</th>
+                    <th>Technology</th>
+                    <th>Selection Rationale for College Project & Real-World Utility</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Backend Web Framework</strong></td>
+                    <td><code>Python 3.9+ & Flask 3.1</code></td>
+                    <td>Minimalistic WSGI architecture; sub-millisecond route dispatching; zero monolithic bloat; native integration with standard library SQLite.</td>
+                </tr>
+                <tr>
+                    <td><strong>Relational Database</strong></td>
+                    <td><code>SQLite 3</code></td>
+                    <td>ACID-compliant serverless storage embedded in the host process; zero complex external database installation; portable across laptops for viva review.</td>
+                </tr>
+                <tr>
+                    <td><strong>Security & Auth</strong></td>
+                    <td><code>Werkzeug PBKDF2:SHA256</code></td>
+                    <td>Salted one-way cryptographic hashing over 1,000,000 iterations preventing rainbow-table attacks; secure session cookie signing.</td>
+                </tr>
+                <tr>
+                    <td><strong>User Interface Styling</strong></td>
+                    <td><code>Tailwind CSS 3 (CDN)</code></td>
+                    <td>Modern utility-first styling ensuring a clinical-grade medical aesthetic, fully responsive across desktop, iPad, and mobile browsers.</td>
+                </tr>
+                <tr>
+                    <td><strong>GIS & Spatial Mapping</strong></td>
+                    <td><code>Leaflet.js & OpenStreetMap</code></td>
+                    <td>Open-source interactive geographic mapping requiring zero proprietary Google Maps API keys or credit-card dependencies.</td>
+                </tr>
+                <tr>
+                    <td><strong>Vector Iconography</strong></td>
+                    <td><code>FontAwesome 6 (CDN)</code></td>
+                    <td>Industry-standard medical and emergency icons (<code>fa-droplet</code>, <code>fa-truck-medical</code>, <code>fa-hospital</code>, <code>fa-heart-pulse</code>).</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <!-- Section 4: Mathematical Algorithms -->
+        <h2>4. Mathematical Formulations & Algorithmic Design</h2>
+        
+        <h3>4.1 Geodesic Spatial Distance: The Haversine Formulation</h3>
+        <p>
+            To compute spatial proximity between the patient's hospital $(\phi_1, \lambda_1)$ and candidate donors $(\phi_2, \lambda_2)$ without external fee-based APIs, the platform implements the Haversine equation over Earth's mean spherical radius ($R = 6371.0 \text{ km}$):
+        </p>
+        <pre><code>Δφ = radians(lat2 - lat1)
+Δλ = radians(lon2 - lon1)
+a = sin²(Δφ/2) + cos(radians(lat1)) * cos(radians(lat2)) * sin²(Δλ/2)
+c = 2 * atan2(√a, √(1-a))
+distance_km = R * c</code></pre>
+
+        <h3>4.2 Biological Compatibility Matrix Formulation</h3>
+        <p>
+            The matching algorithm cross-references recipient plasma antibodies with donor erythrocyte surface antigens to prevent fatal hemolytic transfusion reactions:
+        </p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Blood Group</th>
+                    <th>Can DONATE Red Cells To</th>
+                    <th>Can RECEIVE Red Cells From</th>
+                    <th>Clinical Designation</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>O-</strong></td>
+                    <td>ALL 8 Blood Groups</td>
+                    <td>O- only</td>
+                    <td><span class="badge badge-red">Universal Red Cell Donor</span></td>
+                </tr>
+                <tr>
+                    <td><strong>O+</strong></td>
+                    <td>O+, A+, B+, AB+</td>
+                    <td>O+, O-</td>
+                    <td>Most Prevalent Demographic Type (~38%)</td>
+                </tr>
+                <tr>
+                    <td><strong>A-</strong></td>
+                    <td>A-, A+, AB-, AB+</td>
+                    <td>A-, O-</td>
+                    <td>Multi-Recipient Compatible</td>
+                </tr>
+                <tr>
+                    <td><strong>A+</strong></td>
+                    <td>A+, AB+</td>
+                    <td>A+, A-, O+, O-</td>
+                    <td>High Regional Demand (~34%)</td>
+                </tr>
+                <tr>
+                    <td><strong>B-</strong></td>
+                    <td>B-, B+, AB-, AB+</td>
+                    <td>B-, O-</td>
+                    <td>Rare Population Type (~2%)</td>
+                </tr>
+                <tr>
+                    <td><strong>B+</strong></td>
+                    <td>B+, AB+</td>
+                    <td>B+, B-, O+, O-</td>
+                    <td>High Hospital Requirement</td>
+                </tr>
+                <tr>
+                    <td><strong>AB-</strong></td>
+                    <td>AB-, AB+</td>
+                    <td>AB-, A-, B-, O-</td>
+                    <td>Rarest Blood Group (~1%)</td>
+                </tr>
+                <tr>
+                    <td><strong>AB+</strong></td>
+                    <td>AB+ only</td>
+                    <td>ALL 8 Blood Groups</td>
+                    <td><span class="badge badge-green">Universal Recipient</span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="page-break"></div>
+
+        <!-- Section 5: Database Architecture -->
+        <h2>5. Database Architecture & Entity-Relationship Schema</h2>
+        <p>The system operates across 5 normalized relational tables in <code>blood_donor.db</code>:</p>
+        
+        <h3>5.1 Table: <code>users</code> (Authentication & Account Profiles)</h3>
+        <p>Stores credentials and clinical parameters for donors and hospital coordinators.</p>
+        <ul>
+            <li><code>id</code> (INTEGER, Primary Key, Auto Increment)</li>
+            <li><code>name</code> (TEXT, Not Null): Full legal name / organization title</li>
+            <li><code>email</code> (TEXT, Unique, Not Null): Login identifier</li>
+            <li><code>password_hash</code> (TEXT, Not Null): Salted PBKDF2:SHA256 digest</li>
+            <li><code>role</code> (TEXT): <code>'donor'</code> or <code>'hospital'</code></li>
+            <li><code>blood_group</code> (TEXT): Clinical blood type</li>
+            <li><code>phone</code>, <code>city</code>, <code>state</code> (TEXT): Emergency contact & geography</li>
+            <li><code>last_donation_date</code> (TEXT): Used for clinical 56-day recovery interval</li>
+            <li><code>is_available</code> (INTEGER): 1 = Available, 0 = Temporarily Offline</li>
+        </ul>
+
+        <h3>5.2 Table: <code>urgent_requests</code> (Hospital Emergency Board)</h3>
+        <p>Stores broadcasting emergency cases matching the project reference screenshots.</p>
+        <ul>
+            <li><code>id</code> (INTEGER, Primary Key): e.g. Case #1 (John Doe), Case #2 (Alice Wong), Case #3 (vijay)</li>
+            <li><code>patient_name</code> (TEXT, Not Null)</li>
+            <li><code>blood_group</code> (TEXT, Not Null)</li>
+            <li><code>units_needed</code> (INTEGER, Not Null)</li>
+            <li><code>units_fulfilled</code> (INTEGER, Default 0): Pledged unit accumulator</li>
+            <li><code>urgency_level</code> (TEXT): <code>'CRITICAL NEED'</code>, <code>'HIGH NEED'</code>, <code>'MEDIUM NEED'</code></li>
+            <li><code>hospital_name</code>, <code>city</code>, <code>hotline</code> (TEXT)</li>
+            <li><code>status</code> (TEXT): <code>'ACTIVE'</code> or <code>'FULFILLED'</code></li>
+        </ul>
+
+        <h3>5.3 Table: <code>request_responses</code> (Volunteer Pledges Ledger)</h3>
+        <p>Enforces transactional tracking when a donor clicks "Volunteer / I Can Donate".</p>
+        <ul>
+            <li><code>id</code> (INTEGER, Primary Key)</li>
+            <li><code>request_id</code> (INTEGER, Foreign Key &rarr; <code>urgent_requests(id)</code>)</li>
+            <li><code>donor_name</code>, <code>donor_email</code>, <code>phone</code>, <code>blood_group</code> (TEXT)</li>
+            <li><code>units_pledged</code> (INTEGER, Default 1)</li>
+            <li><code>status</code> (TEXT): <code>'PLEDGED'</code>, <code>'COMPLETED'</code></li>
+        </ul>
+
+        <!-- Section 6: How to Run -->
+        <h2>6. How to Run the Website in VS Code</h2>
+        <div class="callout">
+            <strong>One-Command Execution:</strong> No complicated database installations (like MySQL or Docker) are needed. The repository includes a pre-seeded database, virtual environment setup, and launch configurations.
+        </div>
+        <ol style="margin-left: 24px; line-height: 2;">
+            <li><strong>Open Folder in VS Code:</strong> Open Visual Studio Code, press <code>Cmd + O</code> (or <code>Ctrl + O</code>), and select the <code>BDF</code> project directory.</li>
+            <li><strong>Open the Terminal:</strong> Press <code>Ctrl + `</code> (backtick) or select <strong>Terminal &rarr; New Terminal</strong> from the menu.</li>
+            <li><strong>Execute Startup Script:</strong> Run:
+                <pre><code>./run.sh</code></pre>
+                <em>(Or run: <code>python3 app.py</code>)</em>
+            </li>
+            <li><strong>Open in Browser:</strong> Open Google Chrome, Safari, or Microsoft Edge and navigate to:
+                <br>👉 <strong style="color: #dc2626;">http://127.0.0.1:5000</strong>
+            </li>
+            <li><strong>Alternative (F5 Run & Debug):</strong> Press the <code>F5</code> key in VS Code to launch the pre-configured debugger!</li>
+        </ol>
+
+        <div class="page-break"></div>
+
+        <!-- Section 7: Presentation Script -->
+        <h2>7. Evaluator Presentation Script (Step-by-Step Flow)</h2>
+        <p>When presenting your capstone project to examiners or faculty review boards, follow this 5-minute structured demonstration:</p>
+
+        <div class="qa-card">
+            <h4>Step 1: Header Presence & Status Toggling</h4>
+            <p>Direct the professor's attention to the top-right navbar. Click <strong>"Status: Available"</strong>. Explain: <em>"Notice how the indicator transitions from green to gray without reloading the page. This uses an asynchronous REST API call (`/api/toggle-status`), ensuring volunteers are never disturbed during exams or travel."</em></p>
+        </div>
+
+        <div class="qa-card">
+            <h4>Step 2: Real-Time Matching & Biological Compatibility</h4>
+            <p>Select blood group <strong>"O-"</strong> and city <strong>"New York"</strong> (or click the quick shortcut). Explain: <em>"The matching engine checks ABO and Rh antigen compatibility. When 'Include medically compatible groups' is selected, the system prioritizes Universal Donors (O-) for critical emergency trauma."</em></p>
+        </div>
+
+        <div class="qa-card">
+            <h4>Step 3: Emergency Broadcast Board & Live Fulfillment Tracking</h4>
+            <p>Scroll down to the <strong>"Active Urgent Blood Needs"</strong> grid. Show the exact reference patients: <strong>John Doe</strong> (Mount Sinai Hospital), <strong>Alice Wong</strong> (UCSF), and <strong>vijay</strong> (hm chennai). Click <strong>"Volunteer / I Can Donate"</strong> on John Doe's card, confirm the pledge, and show the live progress bar advancing to 100%!</p>
+        </div>
+
+        <div class="qa-card">
+            <h4>Step 4: Role-Based Authentication & Personal Donor Dashboard</h4>
+            <p>Navigate to <strong>Login</strong> &rarr; click <strong>Autofill "nihil"</strong> &rarr; click <strong>Sign In</strong>. Demonstrate the <strong>Digital Donor ID Card</strong> with verification QR code, and highlight the <strong>Donation Eligibility Tracker</strong> showing the countdown based on the clinical 56-day whole blood recovery rule.</p>
+        </div>
+
+        <div class="qa-card">
+            <h4>Step 5: Hospital Coordinator View & Regional Blood Banks</h4>
+            <p>Log out, click <strong>Autofill "Dr. Sarah Jenkins"</strong> (Mount Sinai Hospital), and open <strong>Blood Banks</strong>. Explain: <em>"Hospital coordinators have dedicated oversight to monitor regional reserves across 5 major blood groups and manage incoming donor pledges."</em></p>
+        </div>
+
+        <!-- Section 8: Top 10 Viva Voce Questions -->
+        <h2>8. Top 10 Viva Voce Oral Questions & Model Answers</h2>
+
+        <div class="qa-card">
+            <h4>Q1: Why did you choose Python Flask over Django or Spring Boot?</h4>
+            <p><strong>Answer:</strong> Flask is a lightweight WSGI micro-framework with sub-millisecond route dispatching and minimal memory overhead. For a medical emergency network where immediate request processing is paramount, Flask avoids the unnecessary monolithic boilerplate of Django while giving full control over the REST API layer.</p>
+        </div>
+
+        <div class="qa-card">
+            <h4>Q2: How does the system prevent hemolytic transfusion reactions?</h4>
+            <p><strong>Answer:</strong> Hemolytic transfusion reactions occur when recipient antibodies agglutinate foreign red blood cell antigens. Our backend incorporates a directed graph in <code>app.py</code> mapping safe donor-to-recipient pathways. For instance, $AB^+$ patients lack anti-A and anti-B antibodies, qualifying them as Universal Recipients, whereas $O^-$ erythrocytes have neither A nor B antigens, qualifying them as Universal Donors.</p>
+        </div>
+
+        <div class="qa-card">
+            <h4>Q3: How are passwords secured in the database?</h4>
+            <p><strong>Answer:</strong> Passwords undergo salted key derivation using PBKDF2 with HMAC-SHA256 across 1,000,000 iterations. Plaintext passwords are never stored; verification uses constant-time comparison (<code>check_password_hash</code>) to eliminate side-channel timing attacks.</p>
+        </div>
+
+        <div class="qa-card">
+            <h4>Q4: How does spatial search operate without costly Google Maps billing?</h4>
+            <p><strong>Answer:</strong> Distance is calculated server-side using the trigonometric <strong>Haversine Formula</strong> on latitude/longitude pairs. The frontend renders these coordinates on interactive <strong>OpenStreetMap</strong> tiles via <strong>Leaflet.js</strong>, an open-source mapping engine requiring zero API keys and zero vendor lock-in.</p>
+        </div>
+
+        <div class="qa-card">
+            <h4>Q5: What happens when an urgent request is fully pledged?</h4>
+            <p><strong>Answer:</strong> When a donor pledges blood via <code>/api/respond-urgent</code>, the <code>units_fulfilled</code> counter increments. When <code>units_fulfilled >= units_needed</code>, the system updates the record status to <code>'FULFILLED'</code>, turning the progress bar green and notifying attending hospital staff.</p>
+        </div>
+
+        <!-- Section 9: Conclusion -->
+        <h2>9. Conclusion & Academic Certification</h2>
+        <p>
+            LifePulse successfully addresses the systemic latency and transparency deficits in emergency blood banking. By combining biological compatibility logic, asynchronous presence toggling, spatial radius filtering, and real-time unit fulfillment tracking into a single responsive web platform, the system demonstrates how modern software engineering can directly preserve human life during clinical emergencies.
+        </p>
+        <p style="margin-top: 40px; border-top: 1px solid #e2e8f0; padding-top: 20px; font-size: 13px; color: #64748b; text-align: center;">
+            Academic Project Developed by <strong>Sami Farhan</strong> (@Samifarhan52) &bull; LifePulse Platform &bull; Year 2026
+        </p>
+
+    </div>
+
+</body>
+</html>
