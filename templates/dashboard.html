@@ -1,0 +1,302 @@
+{% extends "base.html" %}
+
+{% block title %}My Dashboard - LifePulse{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+
+    <!-- Top Banner -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 pb-6 border-b border-gray-200">
+        <div class="flex items-center gap-4">
+            <div class="w-16 h-16 rounded-2xl bg-gradient-to-tr from-red-600 to-rose-500 text-white flex items-center justify-center font-extrabold text-2xl shadow-md shadow-red-200">
+                {{ user.name[0] }}
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 font-['Plus_Jakarta_Sans']">{{ user.name }}</h1>
+                    <span class="px-2.5 py-0.5 rounded-full text-xs font-bold {% if user.role == 'hospital' %}bg-blue-100 text-blue-800 border border-blue-200{% else %}bg-red-100 text-red-800 border border-red-200{% endif %}">
+                        {{ user.role|upper }} PORTAL
+                    </span>
+                </div>
+                <p class="text-xs sm:text-sm text-slate-500 mt-0.5">
+                    {{ user.email }} &bull; 📍 {{ user.city }}, {{ user.state or '' }}
+                </p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            {% if user.role == 'hospital' %}
+            <button onclick="openUrgentModal()" class="bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-xs inline-flex items-center gap-2 transition-all">
+                <i class="fa-solid fa-plus"></i> Post Urgent Blood Need
+            </button>
+            {% else %}
+            <a href="{{ url_for('urgent_needs_page') }}" class="bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs sm:text-sm px-4 py-2.5 rounded-xl shadow-xs inline-flex items-center gap-2 transition-all">
+                <i class="fa-solid fa-truck-medical"></i> View Urgent Needs ({{ active_urgent_count }})
+            </a>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- MAIN DASHBOARD GRID -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+
+        <!-- Left Column: Donor ID Card & Eligibility (or Hospital Summary) -->
+        <div class="space-y-6">
+            {% if user.role == 'donor' %}
+            <!-- DIGITAL DONOR ID CARD -->
+            <div class="rounded-3xl p-6 bg-gradient-to-br from-slate-900 via-slate-800 to-red-950 text-white shadow-xl relative overflow-hidden">
+                <div class="absolute -right-6 -bottom-6 opacity-10 text-white text-9xl pointer-events-none">
+                    <i class="fa-solid fa-droplet"></i>
+                </div>
+                <div class="flex items-center justify-between mb-6">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-heart-pulse text-red-500 text-lg"></i>
+                        <span class="font-bold text-sm tracking-wider uppercase font-['Plus_Jakarta_Sans']">LifePulse Donor Card</span>
+                    </div>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-red-500/20 text-red-300 border border-red-500/30">
+                        VERIFIED #LP-{{ user.id }}49
+                    </span>
+                </div>
+
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <div class="text-xs text-slate-400">Donor Name</div>
+                        <div class="text-xl font-extrabold text-white">{{ user.name }}</div>
+                        <div class="text-xs text-slate-300 mt-1">📍 {{ user.city }}, {{ user.state or '' }}</div>
+                    </div>
+                    <div class="w-14 h-14 rounded-full bg-primary-600 text-white font-black text-xl flex items-center justify-center shadow-lg ring-4 ring-white/10">
+                        {{ user.blood_group or 'O+' }}
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-white/10 flex items-center justify-between text-xs">
+                    <div>
+                        <span class="text-slate-400 block text-[10px]">Current Status:</span>
+                        <span class="font-bold {% if user.is_available %}text-emerald-400{% else %}text-slate-400{% endif %}">
+                            {% if user.is_available %}● Available for Alerts{% else %}○ Offline{% endif %}
+                        </span>
+                    </div>
+                    <!-- Simulated QR Code Icon -->
+                    <div class="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center text-white" title="Hospital Verification QR">
+                        <i class="fa-solid fa-qrcode text-lg"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MEDICAL ELIGIBILITY STATUS -->
+            <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                <h3 class="text-base font-bold text-slate-900 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-stethoscope text-primary-600"></i>
+                    <span>Donation Eligibility Tracker</span>
+                </h3>
+                {% if eligibility.is_eligible %}
+                <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-900 text-xs">
+                    <div class="flex items-center gap-2 font-bold text-sm text-emerald-800 mb-1">
+                        <i class="fa-solid fa-circle-check"></i> Eligible to Donate Today
+                    </div>
+                    <p class="leading-relaxed">
+                        It has been over 56 days since your last donation. You are in safe condition to pledge blood units to critical cases.
+                    </p>
+                </div>
+                {% else %}
+                <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs">
+                    <div class="flex items-center gap-2 font-bold text-sm text-amber-800 mb-1">
+                        <i class="fa-solid fa-clock"></i> Recovery Interval Active
+                    </div>
+                    <p class="leading-relaxed">
+                        Next safe whole blood donation available in <strong>{{ eligibility.days_left }} days</strong> (on {{ eligibility.next_date }}).
+                    </p>
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <!-- HOSPITAL COORDINATOR INFO -->
+            <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                <h3 class="text-base font-bold text-slate-900 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-hospital text-blue-600"></i>
+                    <span>Hospital Emergency Protocol</span>
+                </h3>
+                <p class="text-xs text-slate-600 leading-relaxed mb-4">
+                    As an authorized medical coordinator, your emergency broadcasts immediately alert compatible donors within a 25 km radius.
+                </p>
+                <div class="p-3 bg-blue-50 rounded-xl border border-blue-200 text-xs text-blue-900 space-y-1">
+                    <p><strong>Hotline:</strong> {{ user.phone }}</p>
+                    <p><strong>Location:</strong> {{ user.city }}, {{ user.state or '' }}</p>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- EDIT PROFILE SETTINGS FORM -->
+            <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm">
+                <h3 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-slate-600"></i>
+                    <span>Contact & Location Settings</span>
+                </h3>
+
+                <form action="{{ url_for('edit_profile') }}" method="POST" class="space-y-3 text-xs">
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Emergency Phone</label>
+                        <input type="tel" name="phone" value="{{ user.phone }}" required 
+                               class="w-full px-3 py-2 rounded-xl border border-gray-300">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">City</label>
+                            <input type="text" name="city" value="{{ user.city }}" required 
+                                   class="w-full px-3 py-2 rounded-xl border border-gray-300">
+                        </div>
+                        <div>
+                            <label class="block font-semibold text-slate-700 mb-1">State</label>
+                            <input type="text" name="state" value="{{ user.state or '' }}" 
+                                   class="w-full px-3 py-2 rounded-xl border border-gray-300">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Blood Group</label>
+                        <select name="blood_group" class="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white">
+                            {% for bg in blood_groups %}
+                                <option value="{{ bg }}" {% if user.blood_group == bg %}selected{% endif %}>{{ bg }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-semibold text-slate-700 mb-1">Last Whole Blood Donation Date</label>
+                        <input type="date" name="last_donation_date" value="{{ user.last_donation_date or '' }}" 
+                               class="w-full px-3 py-2 rounded-xl border border-gray-300">
+                    </div>
+
+                    <button type="submit" class="w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors">
+                        Save Profile Updates
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Right 2 Columns: Pledges / Hospital Active Broadcasts -->
+        <div class="lg:col-span-2 space-y-6">
+            {% if user.role == 'donor' %}
+            <!-- DONOR PLEDGES & VOLUNTEER HISTORY -->
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-sm">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-hand-holding-heart text-primary-600"></i>
+                            <span>My Emergency Response Pledges</span>
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Critical patients you have volunteered to assist</p>
+                    </div>
+                    <span class="px-3 py-1 rounded-full bg-slate-100 text-slate-700 font-bold text-xs">
+                        {{ pledges|length }} Pledges Recorded
+                    </span>
+                </div>
+
+                {% if pledges %}
+                <div class="space-y-4">
+                    {% for p in pledges %}
+                    <div class="p-5 rounded-2xl border border-gray-200 hover:border-red-200 hover:bg-red-50/20 transition-all flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-red-100 text-red-700">
+                                    {{ p.urgency_level }}
+                                </span>
+                                <span class="text-xs text-slate-400 font-medium">Pledged on {{ p.created_at[:10] }}</span>
+                            </div>
+                            <h4 class="font-bold text-base text-slate-900">
+                                Patient: {{ p.patient_name }} (Blood Group: <strong class="text-red-600">{{ p.blood_group }}</strong>)
+                            </h4>
+                            <div class="text-xs text-slate-600 flex items-center gap-2 mt-1">
+                                <span><i class="fa-solid fa-hospital text-slate-400"></i> {{ p.hospital_name }}</span>
+                                <span>&bull;</span>
+                                <span><i class="fa-solid fa-location-dot text-slate-400"></i> {{ p.city }}</span>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-2">
+                            <a href="tel:{{ p.hotline }}" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl inline-flex items-center gap-1.5 shadow-xs">
+                                <i class="fa-solid fa-phone"></i>
+                                <span>Call Ward ({{ p.hotline }})</span>
+                            </a>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="p-8 rounded-2xl bg-gray-50 border border-dashed border-gray-300 text-center">
+                    <div class="w-12 h-12 rounded-full bg-red-100 text-primary-600 flex items-center justify-center mx-auto mb-3 text-lg">
+                        <i class="fa-solid fa-handshake-angle"></i>
+                    </div>
+                    <h4 class="font-bold text-slate-800 text-sm mb-1">No Active Pledges</h4>
+                    <p class="text-xs text-slate-500 max-w-sm mx-auto mb-4">
+                        You have not pledged to any urgent emergency blood requests yet. Check the live broadcast board to help save a life.
+                    </p>
+                    <a href="{{ url_for('urgent_needs_page') }}" class="bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-xs inline-flex items-center gap-1.5">
+                        Browse Urgent Needs &rarr;
+                    </a>
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <!-- HOSPITAL COORDINATOR EMERGENCY REQUESTS -->
+            <div class="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-sm">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900 flex items-center gap-2">
+                            <i class="fa-solid fa-bullhorn text-blue-600"></i>
+                            <span>Hospital Emergency Broadcasts</span>
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-0.5">Manage live emergency blood requests and track donor responses</p>
+                    </div>
+                    <button onclick="openUrgentModal()" class="bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl shadow-xs">
+                        + New Broadcast
+                    </button>
+                </div>
+
+                <div class="space-y-4">
+                    {% for hr in hospital_requests %}
+                    <div class="p-5 rounded-2xl border border-gray-200 bg-white shadow-xs">
+                        <div class="flex items-start justify-between mb-3">
+                            <div>
+                                <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase {% if hr.status == 'FULFILLED' %}bg-emerald-100 text-emerald-800{% else %}bg-red-100 text-red-800{% endif %}">
+                                    {{ hr.status }}
+                                </span>
+                                <h4 class="text-base font-bold text-slate-900 mt-1">
+                                    Patient: {{ hr.patient_name }} ({{ hr.blood_group }})
+                                </h4>
+                                <div class="text-xs text-slate-500">{{ hr.hospital_name }} &bull; Hotline: {{ hr.hotline }}</div>
+                            </div>
+                            <div class="w-10 h-10 rounded-full bg-red-600 text-white font-bold flex items-center justify-center text-sm">
+                                {{ hr.blood_group }}
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar (Trackable) -->
+                        <div class="mb-3">
+                            <div class="flex justify-between text-xs mb-1 font-semibold">
+                                <span class="text-slate-600">Units Secured: {{ hr.units_fulfilled }} / {{ hr.units_needed }}</span>
+                                <span class="text-primary-600">{{ hr.volunteers_count }} Donor(s) Pledged</span>
+                            </div>
+                            <div class="w-full h-2.5 rounded-full bg-gray-100 overflow-hidden">
+                                <div class="h-full bg-primary-600 rounded-full transition-all" style="width: {{ [((hr.units_fulfilled / hr.units_needed) * 100)|int, 100]|min }}%;"></div>
+                            </div>
+                        </div>
+
+                        {% if hr.status != 'FULFILLED' %}
+                        <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+                            <form action="{{ url_for('api_mark_fulfilled', req_id=hr.id) }}" method="POST">
+                                <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold px-3 py-1.5 rounded-xl transition-all shadow-2xs">
+                                    <i class="fa-solid fa-check"></i> Mark as Fulfilled
+                                </button>
+                            </form>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

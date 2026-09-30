@@ -1,0 +1,256 @@
+{% extends "base.html" %}
+
+{% block title %}Blood Compatibility Matrix & Calculator - LifePulse{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+
+    <!-- Header -->
+    <div class="text-center max-w-3xl mx-auto mb-12">
+        <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-red-100 text-red-700 text-xs font-bold uppercase mb-4 shadow-2xs">
+            <i class="fa-solid fa-dna text-red-600"></i>
+            <span>Medical ABO & Rh Factor Engine</span>
+        </div>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight font-['Plus_Jakarta_Sans']">
+            Blood Compatibility Matrix & Calculator
+        </h1>
+        <p class="text-sm sm:text-base text-slate-600 mt-2">
+            Understand how our algorithm matches donors and recipients instantly without risking fatal hemolytic transfusion reactions.
+        </p>
+    </div>
+
+    <!-- INTERACTIVE CALCULATOR CARD -->
+    <div class="bg-white rounded-3xl p-6 sm:p-10 border border-gray-200 shadow-xl mb-14">
+        <div class="text-center mb-8">
+            <h3 class="text-xl font-bold text-slate-900 mb-2">Select a Blood Group to Analyze</h3>
+            <p class="text-xs sm:text-sm text-slate-500">Click any blood type below to view its biological compatibility rules:</p>
+            
+            <div class="flex flex-wrap items-center justify-center gap-3 mt-5">
+                {% for bg in blood_groups %}
+                <button onclick="selectGroup('{{ bg }}')" id="btn-{{ bg }}"
+                        class="group-btn w-14 h-14 sm:w-16 sm:h-16 rounded-2xl font-black text-lg sm:text-xl border-2 transition-all flex items-center justify-center
+                        {% if bg == 'O-' %}bg-primary-600 text-white border-primary-700 shadow-lg scale-105{% else %}bg-gray-50 hover:bg-red-50 text-slate-800 border-gray-200{% endif %}">
+                    {{ bg }}
+                </button>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-gray-100">
+            <!-- CAN GIVE TO (DONATE) -->
+            <div class="bg-emerald-50/60 rounded-2xl p-6 border border-emerald-200">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-xl bg-emerald-500 text-white flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-arrow-up-from-bracket"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-emerald-950 text-base">Can DONATE Blood To:</h4>
+                        <p class="text-xs text-emerald-700">Eligible recipient groups</p>
+                    </div>
+                </div>
+                <div id="giveToList" class="flex flex-wrap gap-2.5 min-h-[50px] items-center">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
+
+            <!-- CAN RECEIVE FROM -->
+            <div class="bg-blue-50/60 rounded-2xl p-6 border border-blue-200">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center text-lg">
+                        <i class="fa-solid fa-arrow-down-to-bracket"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-blue-950 text-base">Can RECEIVE Blood From:</h4>
+                        <p class="text-xs text-blue-700">Safe donor types</p>
+                    </div>
+                </div>
+                <div id="receiveFromList" class="flex flex-wrap gap-2.5 min-h-[50px] items-center">
+                    <!-- Populated dynamically via JS -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Explanatory Banner -->
+        <div id="groupFactBox" class="mt-6 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs sm:text-sm text-slate-700 flex items-start gap-3">
+            <i class="fa-solid fa-circle-info text-primary-600 text-base mt-0.5"></i>
+            <span id="groupFactText">
+                <strong>O-Negative (O-)</strong> is the <em>Universal Red Cell Donor</em>. It can be transfused to individuals of any blood group and is crucial in emergency situations.
+            </span>
+        </div>
+    </div>
+
+    <!-- FULL MEDICAL REFERENCE TABLE -->
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200 shadow-sm mb-14 overflow-hidden">
+        <h3 class="text-xl font-bold text-slate-900 mb-2">Comprehensive Compatibility Matrix</h3>
+        <p class="text-xs sm:text-sm text-slate-500 mb-6">Cross-reference table utilized by blood bank management systems worldwide.</p>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs sm:text-sm border-collapse">
+                <thead>
+                    <tr class="bg-slate-100 text-slate-700 uppercase tracking-wider font-bold">
+                        <th class="p-3.5 rounded-l-xl">Blood Group</th>
+                        <th class="p-3.5">Give Red Cells To (Donation)</th>
+                        <th class="p-3.5">Receive Red Cells From</th>
+                        <th class="p-3.5 rounded-r-xl">Special Clinical Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100 text-slate-700 font-medium">
+                    <tr class="hover:bg-red-50/40">
+                        <td class="p-3.5 font-bold text-red-600 text-base">O-</td>
+                        <td class="p-3.5">All Groups (Universal)</td>
+                        <td class="p-3.5">O- only</td>
+                        <td class="p-3.5"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-red-100 text-red-800">Universal Red Cell Donor</span></td>
+                    </tr>
+                    <tr class="hover:bg-red-50/40">
+                        <td class="p-3.5 font-bold text-slate-900 text-base">O+</td>
+                        <td class="p-3.5">O+, A+, B+, AB+</td>
+                        <td class="p-3.5">O+, O-</td>
+                        <td class="p-3.5 text-slate-500">Most common population type (~38%)</td>
+                    </tr>
+                    <tr class="hover:bg-red-50/40">
+                        <td class="p-3.5 font-bold text-slate-900 text-base">A-</td>
+                        <td class="p-3.5">A-, A+, AB-, AB+</td>
+                        <td class="p-3.5">A-, O-</td>
+                        <td class="p-3.5 text-slate-500">Can assist both A and AB recipients</td>
+                    </tr>
+                    <tr class="hover:bg-red-50/40">
+                        <td class="p-3.5 font-bold text-slate-900 text-base">A+</td>
+                        <td class="p-3.5">A+, AB+</td>
+                        <td class="p-3.5">A+, A-, O+, O-</td>
+                        <td class="p-3.5 text-slate-500">Second most common group (~34%)</td>
+                    </tr>
+                    <tr class="hover:bg-red-50/40">
+                        <td class="p-3.5 font-bold text-slate-900 text-base">B-</td>
+                        <td class="p-3.5">B-, B+, AB-, AB+</td>
+                        <td class="p-3.5">B-, O-</td>
+                        <td class="p-3.5 text-slate-500">Rare group (~2% of population)</td>
+                    </tr>
+                    <tr class="hover:bg-red-50/40">
+                        <td class="p-3.5 font-bold text-slate-900 text-base">B+</td>
+                        <td class="p-3.5">B+, AB+</td>
+                        <td class="p-3.5">B+, B-, O+, O-</td>
+                        <td class="p-3.5 text-slate-500">High demand in regional clinics</td>
+                    </tr>
+                    <tr class="hover:bg-red-50/40">
+                        <td class="p-3.5 font-bold text-slate-900 text-base">AB-</td>
+                        <td class="p-3.5">AB-, AB+</td>
+                        <td class="p-3.5">AB-, A-, B-, O-</td>
+                        <td class="p-3.5 text-slate-500">Rarest blood group (~1%)</td>
+                    </tr>
+                    <tr class="hover:bg-red-50/40">
+                        <td class="p-3.5 font-bold text-emerald-600 text-base">AB+</td>
+                        <td class="p-3.5">AB+ only</td>
+                        <td class="p-3.5">All Groups (Universal)</td>
+                        <td class="p-3.5"><span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">Universal Recipient</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- QUICK 30-SECOND ELIGIBILITY QUIZ -->
+    <div class="bg-gradient-to-br from-slate-900 to-slate-800 text-white rounded-3xl p-6 sm:p-10 shadow-xl">
+        <div class="max-w-2xl mx-auto text-center">
+            <h3 class="text-2xl font-bold mb-2">Can You Donate Blood Today?</h3>
+            <p class="text-xs sm:text-sm text-slate-300 mb-6">Answer 3 quick questions to check your current donation eligibility:</p>
+
+            <div class="space-y-4 text-left bg-slate-800/80 p-5 rounded-2xl border border-slate-700 text-xs sm:text-sm">
+                <div class="flex items-center justify-between gap-4">
+                    <span>1. Are you between 18 and 65 years old and weigh at least 50 kg?</span>
+                    <input type="checkbox" id="q1" checked class="w-5 h-5 text-red-600 rounded">
+                </div>
+                <div class="flex items-center justify-between gap-4">
+                    <span>2. Have you been free of fever, flu, or antibiotic treatments for at least 7 days?</span>
+                    <input type="checkbox" id="q2" checked class="w-5 h-5 text-red-600 rounded">
+                </div>
+                <div class="flex items-center justify-between gap-4">
+                    <span>3. Has it been at least 8 weeks (56 days) since your last whole blood donation?</span>
+                    <input type="checkbox" id="q3" checked class="w-5 h-5 text-red-600 rounded">
+                </div>
+            </div>
+
+            <div class="mt-6 flex flex-col sm:flex-row items-center justify-center gap-4">
+                <button onclick="checkQuizResult()" class="bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs sm:text-sm px-6 py-3 rounded-xl transition-all shadow-md active:scale-95">
+                    Check Eligibility Status
+                </button>
+                <a href="{{ url_for('register_donor') }}" class="bg-white/10 hover:bg-white/20 text-white text-xs sm:text-sm font-semibold px-6 py-3 rounded-xl transition-all">
+                    Register as Donor Now
+                </a>
+            </div>
+            <div id="quizResult" class="mt-4 text-xs font-semibold hidden"></div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const compData = {
+        'A+': { give: ['A+', 'AB+'], receive: ['A+', 'A-', 'O+', 'O-'], fact: 'A+ individuals can receive blood from A and O types, making up over 34% of hospital requests.' },
+        'A-': { give: ['A+', 'A-', 'AB+', 'AB-'], receive: ['A-', 'O-'], fact: 'A- red cells can be given to both A and AB patients of both positive and negative Rh.' },
+        'B+': { give: ['B+', 'AB+'], receive: ['B+', 'B-', 'O+', 'O-'], fact: 'B+ is especially prevalent in Asia and vital for treating sickle cell disease and emergencies.' },
+        'B-': { give: ['B+', 'B-', 'AB+', 'AB-'], receive: ['B-', 'O-'], fact: 'B- is extremely rare; blood banks maintain special on-call rosters for B- emergencies.' },
+        'AB+': { give: ['AB+'], receive: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'], fact: 'AB+ is the <strong>Universal Recipient</strong> for red blood cells. Any safe group can be transfused in emergencies!' },
+        'AB-': { give: ['AB+', 'AB-'], receive: ['AB-', 'A-', 'B-', 'O-'], fact: 'AB- is the rarest blood type (~1%). However, AB plasma is universally compatible for burn victims.' },
+        'O+': { give: ['O+', 'A+', 'B+', 'AB+'], receive: ['O+', 'O-'], fact: 'O+ is the most frequently transfused blood type because more patients have O+ blood than any other.' },
+        'O-': { give: ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'], receive: ['O-'], fact: '<strong>O- is the Universal Donor</strong>. Emergency trauma wards rely on O- units before patient blood typing is confirmed.' }
+    };
+
+    function selectGroup(group) {
+        document.querySelectorAll('.group-btn').forEach(btn => {
+            btn.classList.remove('bg-primary-600', 'text-white', 'border-primary-700', 'shadow-lg', 'scale-105');
+            btn.classList.add('bg-gray-50', 'text-slate-800', 'border-gray-200');
+        });
+
+        const activeBtn = document.getElementById('btn-' + group);
+        if (activeBtn) {
+            activeBtn.classList.remove('bg-gray-50', 'text-slate-800', 'border-gray-200');
+            activeBtn.classList.add('bg-primary-600', 'text-white', 'border-primary-700', 'shadow-lg', 'scale-105');
+        }
+
+        const data = compData[group];
+        if (!data) return;
+
+        // Render Give To
+        const giveContainer = document.getElementById('giveToList');
+        giveContainer.innerHTML = data.give.map(g => `
+            <span class="px-3.5 py-1.5 rounded-xl bg-white border border-emerald-300 text-emerald-800 font-extrabold text-sm shadow-2xs flex items-center gap-1.5">
+                <i class="fa-solid fa-check text-emerald-600 text-xs"></i> ${g}
+            </span>
+        `).join('');
+
+        // Render Receive From
+        const receiveContainer = document.getElementById('receiveFromList');
+        receiveContainer.innerHTML = data.receive.map(g => `
+            <span class="px-3.5 py-1.5 rounded-xl bg-white border border-blue-300 text-blue-800 font-extrabold text-sm shadow-2xs flex items-center gap-1.5">
+                <i class="fa-solid fa-check text-blue-600 text-xs"></i> ${g}
+            </span>
+        `).join('');
+
+        // Render Fact
+        document.getElementById('groupFactText').innerHTML = data.fact;
+    }
+
+    function checkQuizResult() {
+        const q1 = document.getElementById('q1').checked;
+        const q2 = document.getElementById('q2').checked;
+        const q3 = document.getElementById('q3').checked;
+        const result = document.getElementById('quizResult');
+
+        result.classList.remove('hidden');
+        if (q1 && q2 && q3) {
+            result.className = "mt-4 p-3 rounded-xl bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-semibold";
+            result.innerHTML = "🎉 Congratulations! You meet all baseline health eligibility requirements to donate blood today.";
+        } else {
+            result.className = "mt-4 p-3 rounded-xl bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-semibold";
+            result.innerHTML = "⚠️ Based on your selections, you may need a short waiting interval or physician clearance before donating.";
+        }
+    }
+
+    // Default select O-
+    document.addEventListener("DOMContentLoaded", () => {
+        selectGroup('O-');
+    });
+</script>
+{% endblock %}

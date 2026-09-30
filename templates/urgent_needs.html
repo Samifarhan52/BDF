@@ -1,0 +1,208 @@
+{% extends "base.html" %}
+
+{% block title %}Emergency Urgent Blood Needs - LifePulse Broadcast{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+
+    <!-- Header Section -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold uppercase mb-2">
+                <span class="w-2 h-2 rounded-full bg-red-600 animate-ping"></span>
+                <span>Live Hospital Broadcast</span>
+            </div>
+            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight font-['Plus_Jakarta_Sans']">
+                Active Urgent Blood Needs
+            </h1>
+            <p class="text-sm text-slate-500 mt-1">
+                Verified hospital emergency cases requiring immediate blood units. Donors in matching areas are prioritized.
+            </p>
+        </div>
+        <div>
+            <button onclick="openUrgentModal()" class="bg-primary-600 hover:bg-primary-700 text-white font-bold text-sm px-5 py-3 rounded-xl shadow-md shadow-red-200 inline-flex items-center gap-2 transition-all active:scale-95">
+                <i class="fa-solid fa-plus"></i>
+                <span>Submit Emergency Need</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Filters Strip -->
+    <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm mb-8">
+        <form action="{{ url_for('urgent_needs_page') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
+            <!-- Urgency Level -->
+            <div class="lg:col-span-3">
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Urgency Priority</label>
+                <select name="urgency" class="w-full h-11 px-3.5 rounded-xl border border-gray-300 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-red-500">
+                    <option value="">All Urgency Levels</option>
+                    <option value="CRITICAL NEED" {% if selected_urgency == 'CRITICAL NEED' %}selected{% endif %}>🚨 CRITICAL NEED (Immediate)</option>
+                    <option value="HIGH NEED" {% if selected_urgency == 'HIGH NEED' %}selected{% endif %}>⚠️ HIGH NEED (Within 6h)</option>
+                    <option value="MEDIUM NEED" {% if selected_urgency == 'MEDIUM NEED' %}selected{% endif %}>⏱️ MEDIUM NEED (Within 24h)</option>
+                </select>
+            </div>
+
+            <!-- Blood Group -->
+            <div class="lg:col-span-3">
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Blood Group</label>
+                <select name="blood_group" class="w-full h-11 px-3.5 rounded-xl border border-gray-300 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-red-500">
+                    <option value="">All Groups</option>
+                    {% for bg in blood_groups %}
+                        <option value="{{ bg }}" {% if selected_group == bg %}selected{% endif %}>{{ bg }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- City -->
+            <div class="lg:col-span-4">
+                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">City or Hospital</label>
+                <input type="text" name="city" value="{{ selected_city or '' }}" placeholder="e.g. New York, Chennai, San Francisco..." 
+                       class="w-full h-11 px-3.5 rounded-xl border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500">
+            </div>
+
+            <!-- Action -->
+            <div class="lg:col-span-2 flex items-center gap-2">
+                <button type="submit" class="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-1.5 transition-colors">
+                    <i class="fa-solid fa-filter"></i>
+                    <span>Apply</span>
+                </button>
+                <a href="{{ url_for('urgent_needs_page') }}" class="h-11 px-3.5 rounded-xl border border-gray-300 hover:bg-gray-50 text-slate-600 flex items-center justify-center text-sm" title="Clear">
+                    <i class="fa-solid fa-rotate-left"></i>
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Active Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+        {% for req in requests %}
+        <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-md hover:shadow-xl transition-all relative flex flex-col justify-between group">
+            <div>
+                <!-- Top Badge & Blood Group Circle (Screenshot 2 Match) -->
+                <div class="flex items-start justify-between mb-4">
+                    <div>
+                        {% if req.urgency_level == 'CRITICAL NEED' %}
+                            <span class="px-3.5 py-1 rounded-full text-xs font-extrabold tracking-wide uppercase bg-red-100 text-red-700 border border-red-200 shadow-2xs">
+                                CRITICAL NEED
+                            </span>
+                        {% elif req.urgency_level == 'HIGH NEED' %}
+                            <span class="px-3.5 py-1 rounded-full text-xs font-extrabold tracking-wide uppercase bg-amber-100 text-amber-800 border border-amber-200">
+                                HIGH NEED
+                            </span>
+                        {% else %}
+                            <span class="px-3.5 py-1 rounded-full text-xs font-extrabold tracking-wide uppercase bg-orange-100 text-orange-800 border border-orange-200">
+                                MEDIUM NEED
+                            </span>
+                        {% endif %}
+                    </div>
+
+                    <!-- Red Circular Blood Group Badge -->
+                    <div class="w-13 h-13 rounded-full bg-primary-600 text-white font-extrabold flex items-center justify-center text-lg shadow-md shadow-red-300 ring-4 ring-red-50">
+                        {{ req.blood_group }}
+                    </div>
+                </div>
+
+                <!-- Patient Name -->
+                <h3 class="text-xl font-bold text-slate-900 mb-4">
+                    Patient: {{ req.patient_name }}
+                </h3>
+
+                <!-- Hospital & Medical Details -->
+                <div class="space-y-2.5 text-sm text-slate-600 mb-6">
+                    <div class="flex items-center gap-2.5">
+                        <i class="fa-solid fa-hospital text-primary-600 w-4 text-center"></i>
+                        <span class="font-medium text-slate-800">{{ req.hospital_name }}</span>
+                    </div>
+                    <div class="flex items-center gap-2.5">
+                        <i class="fa-solid fa-droplet text-primary-600 w-4 text-center"></i>
+                        <span>Needed Units: <strong class="text-slate-800">{{ req.units_needed }} Unit(s)</strong></span>
+                    </div>
+                    <div class="flex items-center gap-2.5">
+                        <i class="fa-solid fa-phone text-primary-600 w-4 text-center"></i>
+                        <span>Hotline: <strong class="text-slate-800 font-mono">{{ req.hotline }}</strong></span>
+                    </div>
+                    {% if req.notes %}
+                    <div class="flex items-start gap-2.5 text-slate-500 italic pt-1 text-xs">
+                        <i class="fa-solid fa-circle-info text-primary-600 w-4 text-center mt-0.5"></i>
+                        <span>&ldquo;{{ req.notes }}&rdquo;</span>
+                    </div>
+                    {% endif %}
+                </div>
+
+                <!-- Real-Time Fulfillment Tracker -->
+                <div class="mb-4 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
+                    <div class="flex justify-between text-xs font-semibold mb-1">
+                        <span class="text-slate-600">Pledged: <strong id="pledge-count-{{ req.id }}">{{ req.units_fulfilled or 0 }}</strong> of {{ req.units_needed }} Unit(s)</span>
+                        <span class="text-primary-700 font-bold" id="pledge-pct-{{ req.id }}">
+                            {{ [(((req.units_fulfilled or 0) / req.units_needed) * 100)|int, 100]|min }}%
+                        </span>
+                    </div>
+                    <div class="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
+                        <div id="pledge-bar-{{ req.id }}" class="h-full bg-gradient-to-r from-red-600 to-rose-500 rounded-full transition-all duration-500" 
+                             style="width: {{ [(((req.units_fulfilled or 0) / req.units_needed) * 100)|int, 100]|min }}%;"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="pt-3 border-t border-gray-100 space-y-2">
+                <button onclick="openVolunteerModal({{ req.id }}, '{{ req.patient_name }}', '{{ req.blood_group }}', '{{ req.hospital_name }}')"
+                        class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-xs active:scale-95">
+                    <i class="fa-solid fa-hand-holding-heart"></i>
+                    <span>Volunteer / I Can Donate</span>
+                </button>
+                <div class="flex items-center gap-2">
+                    <a href="tel:{{ req.hotline }}" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs py-2 rounded-xl flex items-center justify-center gap-2 transition-colors">
+                        <i class="fa-solid fa-phone text-slate-600"></i>
+                        <span>Hotline: {{ req.hotline }}</span>
+                    </a>
+                    <a href="https://wa.me/?text=Emergency%20Blood%20Needed!%20Patient:%20{{ req.patient_name }}%20Group:%20{{ req.blood_group }}%20at%20{{ req.hospital_name }}%20Hotline:%20{{ req.hotline }}" 
+                       target="_blank" class="w-9 h-9 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-600 flex items-center justify-center transition-colors" title="Share on WhatsApp">
+                        <i class="fa-brands fa-whatsapp text-base"></i>
+                    </a>
+                    <button onclick="shareUrgentNeed('{{ req.patient_name }}', '{{ req.blood_group }}', '{{ req.hospital_name }}')" 
+                            class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors" title="Copy Link">
+                        <i class="fa-solid fa-share-nodes text-xs"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="col-span-3 bg-white rounded-2xl p-12 text-center border border-dashed border-gray-300">
+            <div class="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
+                <i class="fa-solid fa-shield-heart"></i>
+            </div>
+            <h3 class="text-xl font-bold text-slate-900 mb-1">No Active Emergencies in Selected Filter</h3>
+            <p class="text-sm text-slate-500 max-w-md mx-auto mb-6">
+                All critical requests in this category are currently fulfilled or stabilized.
+            </p>
+            <button onclick="openUrgentModal()" class="bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-xs">
+                Broadcast New Emergency Need
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- College Project Note on Urgency Protocol -->
+    <div class="bg-slate-50 rounded-2xl p-6 border border-slate-200">
+        <h4 class="text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
+            <i class="fa-solid fa-notes-medical text-primary-600"></i>
+            <span>Medical Triage Protocol for College Demonstration</span>
+        </h4>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-slate-600">
+            <div class="p-3 bg-white rounded-xl border border-gray-200">
+                <strong class="text-red-700 block mb-1">🚨 CRITICAL NEED</strong>
+                Immediate trauma surgery, cardiac arrest, catastrophic postpartum hemorrhage. Requires instant dispatch of matching or universal O- donor units.
+            </div>
+            <div class="p-3 bg-white rounded-xl border border-gray-200">
+                <strong class="text-amber-700 block mb-1">⚠️ HIGH NEED</strong>
+                Scheduled emergency surgeries, oncology platelet depletion, ICU support required within 6 hours.
+            </div>
+            <div class="p-3 bg-white rounded-xl border border-gray-200">
+                <strong class="text-orange-700 block mb-1">⏱️ MEDIUM NEED</strong>
+                Thalassemia maintenance, routine dialysis transfusions, pre-operative unit reservation within 24 hours.
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

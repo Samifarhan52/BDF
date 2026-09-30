@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Register as a Blood Donor - LifePulse{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+
+    <!-- Header -->
+    <div class="text-center max-w-2xl mx-auto mb-10">
+        <div class="w-16 h-16 rounded-2xl bg-red-100 text-primary-600 flex items-center justify-center text-2xl mx-auto mb-4 shadow-sm">
+            <i class="fa-solid fa-hand-holding-heart"></i>
+        </div>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight font-['Plus_Jakarta_Sans']">
+            Donor Registration
+        </h1>
+        <p class="text-sm sm:text-base text-slate-600 mt-2">
+            Join the verified LifePulse volunteer network. Your contact details will only be connected when an urgent matching patient needs blood.
+        </p>
+    </div>
+
+    <!-- Registration Card -->
+    <div class="bg-white rounded-3xl p-6 sm:p-10 border border-gray-200 shadow-xl shadow-slate-200/50">
+        <form action="{{ url_for('register_donor') }}" method="POST" class="space-y-8" id="donorRegForm">
+            
+            <!-- Section 1: Basic Information -->
+            <div>
+                <h3 class="text-lg font-bold text-slate-900 mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xs font-bold">1</span>
+                    <span>Donor Profile</span>
+                </h3>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Full Name *</label>
+                        <input type="text" name="name" required placeholder="e.g. Alex Morgan"
+                               class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Blood Group *</label>
+                        <select name="blood_group" required class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-red-500">
+                            <option value="">Select Your Blood Type...</option>
+                            {% for bg in blood_groups %}
+                                <option value="{{ bg }}">{{ bg }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Age *</label>
+                        <input type="number" name="age" min="18" max="65" required placeholder="Must be 18 to 65"
+                               class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Gender *</label>
+                        <select name="gender" required class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm font-medium bg-white focus:outline-none focus:ring-2 focus:ring-red-500">
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                            <option value="Other">Other / Prefer not to say</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Last Donation Date</label>
+                        <input type="date" name="last_donation_date"
+                               class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 2: Contact & Location -->
+            <div>
+                <h3 class="text-lg font-bold text-slate-900 mb-4 pb-2 border-b border-gray-100 flex items-center gap-2">
+                    <span class="w-6 h-6 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xs font-bold">2</span>
+                    <span>Emergency Contact & Location</span>
+                </h3>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Phone Number (Hotline) *</label>
+                        <input type="tel" name="phone" required placeholder="e.g. 555-0199 or +91 98401 23456"
+                               class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Email Address</label>
+                        <input type="email" name="email" placeholder="e.g. donor@university.edu"
+                               class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">City *</label>
+                        <input type="text" name="city" required placeholder="e.g. New York, Chennai, San Francisco..."
+                               class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">State / Province</label>
+                        <input type="text" name="state" placeholder="e.g. NY, TN, CA..."
+                               class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Zip / Postal Code</label>
+                        <input type="text" name="zip_code" placeholder="e.g. 10001, 600001, 94102..."
+                               class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500">
+                    </div>
+
+                    <div class="flex items-center pt-6">
+                        <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+                            <input type="checkbox" name="is_available" checked class="w-5 h-5 text-red-600 rounded border-gray-300 focus:ring-red-500">
+                            <span class="text-xs sm:text-sm font-semibold text-slate-800">Available to respond immediately</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Section 3: Health Screening Checklist (Viva Feature) -->
+            <div class="bg-red-50/60 rounded-2xl p-5 border border-red-100">
+                <h3 class="text-sm font-bold text-red-900 mb-3 flex items-center gap-2">
+                    <i class="fa-solid fa-stethoscope text-primary-600"></i>
+                    <span>Medical Self-Declaration & Eligibility (Standard Guidelines)</span>
+                </h3>
+                <div class="space-y-2 text-xs text-slate-700">
+                    <label class="flex items-center gap-2.5 cursor-pointer">
+                        <input type="checkbox" required checked class="w-4 h-4 text-red-600 rounded border-gray-300">
+                        <span>I weigh at least 50 kg (110 lbs) and am in good general health.</span>
+                    </label>
+                    <label class="flex items-center gap-2.5 cursor-pointer">
+                        <input type="checkbox" required checked class="w-4 h-4 text-red-600 rounded border-gray-300">
+                        <span>I have not received a tattoo or body piercing in the last 6 months.</span>
+                    </label>
+                    <label class="flex items-center gap-2.5 cursor-pointer">
+                        <input type="checkbox" required checked class="w-4 h-4 text-red-600 rounded border-gray-300">
+                        <span>I have had no alcohol consumption within the past 24 hours.</span>
+                    </label>
+                </div>
+            </div>
+
+            <!-- Submit -->
+            <div class="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <p class="text-xs text-slate-500">
+                    <i class="fa-solid fa-lock text-slate-400 mr-1"></i> Data stored securely in local database.
+                </p>
+                <button type="submit" class="w-full sm:w-auto bg-primary-600 hover:bg-primary-700 text-white font-bold text-sm px-8 py-3.5 rounded-xl shadow-md shadow-red-200 transition-all active:scale-95">
+                    <i class="fa-solid fa-check mr-2"></i> Complete Donor Registration
+                </button>
+            </div>
+        </form>
+    </div>
+
+</div>
+{% endblock %}
