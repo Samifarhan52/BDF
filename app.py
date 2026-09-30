@@ -689,9 +689,16 @@ def download_project_report():
     report_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'LifePulse_Project_Report.html')
     return send_file(report_path, as_attachment=True, download_name='LifePulse_College_Project_Report.html')
 
+@app.route('/download-pdf')
+def download_pdf_report():
+    pdf_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'LifePulse_College_Project_Report.pdf')
+    if os.path.exists(pdf_path):
+        return send_file(pdf_path, as_attachment=True, download_name='LifePulse_College_Project_Report.pdf')
+    return redirect(url_for('download_project_report'))
+
 if __name__ == '__main__':
     print("\n" + "="*60)
     print("  🩸 LifePulse - Enterprise Blood Donor Finder Started")
-    print("  Local URL: http://127.0.0.1:5000")
+    print("  Local URL: http://127.0.0.1:5000 or http://localhost:5000")
     print("="*60 + "\n")
-    app.run(debug=True, host='127.0.0.1', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5000)
