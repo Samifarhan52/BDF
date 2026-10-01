@@ -838,8 +838,17 @@ def download_pdf_report():
     return redirect(url_for('download_project_report'))
 
 if __name__ == '__main__':
+    import socket
+    port = int(os.environ.get('PORT', 5000))
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    try:
+        s.bind(('0.0.0.0', port))
+        s.close()
+    except OSError:
+        port = 5001
+
     print("\n" + "="*60)
     print("  🩸 LifePulse - Pure HTML/CSS/SQLite Blood Donor Finder")
-    print("  Local URL: http://localhost:5000 or http://127.0.0.1:5000")
+    print(f"  Local URL: http://localhost:{port} or http://127.0.0.1:{port}")
     print("="*60 + "\n")
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=port)
