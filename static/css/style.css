@@ -431,6 +431,183 @@ main {
 }
 
 /* ==========================================================================
+   Authentication Pages (Login & Sign Up)
+   ========================================================================== */
+
+.auth-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 200px);
+  padding: 40px 20px;
+}
+
+.auth-card {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: 24px;
+  box-shadow: 0 20px 30px -10px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+  width: 100%;
+  max-width: 480px;
+  padding: 36px 32px;
+}
+
+.auth-card.auth-card-wide {
+  max-width: 660px;
+}
+
+.auth-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.auth-logo-badge {
+  width: 52px;
+  height: 52px;
+  background: linear-gradient(135deg, #ef4444, #dc2626);
+  color: #ffffff;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  margin: 0 auto 16px auto;
+  box-shadow: 0 4px 14px rgba(220, 38, 38, 0.3);
+}
+
+.auth-title {
+  font-size: 26px;
+  font-weight: 900;
+  color: var(--secondary);
+  line-height: 1.2;
+}
+
+.auth-subtitle {
+  font-size: 13.5px;
+  color: var(--text-muted);
+  margin-top: 6px;
+}
+
+/* Input With Icon */
+.input-with-icon {
+  position: relative;
+  width: 100%;
+}
+
+.input-with-icon .input-icon-left {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-size: 14px;
+  pointer-events: none;
+}
+
+.input-with-icon .form-control {
+  padding-left: 40px;
+  padding-right: 40px;
+  height: 48px;
+  font-size: 14px;
+}
+
+.input-with-icon .toggle-pwd-btn {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 6px;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.input-with-icon .toggle-pwd-btn:hover {
+  color: var(--secondary);
+}
+
+/* Role Selector Grid in Signup */
+.role-cards-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.role-card-option {
+  border: 2px solid var(--border-color);
+  background: #ffffff;
+  border-radius: 14px;
+  padding: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  transition: all 0.2s ease;
+}
+
+.role-card-option:hover {
+  border-color: #cbd5e1;
+  background: #f8fafc;
+}
+
+.role-card-option.active {
+  border-color: var(--primary);
+  background: #fef2f2;
+}
+
+.role-card-radio {
+  margin-top: 3px;
+  accent-color: var(--primary);
+}
+
+.role-card-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--secondary);
+  line-height: 1.2;
+}
+
+.role-card-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-top: 3px;
+}
+
+/* Fast Demo Accounts Viva Box */
+.demo-accounts-box {
+  background: #f8fafc;
+  border: 1px solid var(--border-color);
+  border-radius: 14px;
+  padding: 16px;
+  margin-top: 24px;
+}
+
+.demo-account-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  margin-top: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.demo-account-row:hover {
+  border-color: var(--primary);
+  background: #fff5f5;
+  transform: translateY(-1px);
+}
+
+/* ==========================================================================
    Hero Section
    ========================================================================== */
 

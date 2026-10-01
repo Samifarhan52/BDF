@@ -1,117 +1,117 @@
 {% extends "base.html" %}
 
-{% block title %}Log In - LifePulse Blood Network{% endblock %}
+{% block title %}Sign In - LifePulse Blood Network{% endblock %}
 
 {% block content %}
-<div class="max-w-md mx-auto px-4 sm:px-6 py-12 sm:py-16">
-
-    <!-- Card -->
-    <div class="bg-white rounded-3xl p-7 sm:p-9 border border-gray-200 shadow-xl shadow-slate-200/50">
+<div class="auth-wrapper">
+    <div class="auth-card">
         <!-- Logo & Header -->
-        <div class="text-center mb-8">
-            <div class="w-14 h-14 rounded-2xl bg-gradient-to-tr from-red-600 to-rose-500 text-white flex items-center justify-center text-2xl mx-auto mb-4 shadow-md shadow-red-200">
+        <div class="auth-header">
+            <div class="auth-logo-badge">
                 <i class="fa-solid fa-droplet"></i>
             </div>
-            <h1 class="text-2xl font-extrabold text-slate-900 font-['Plus_Jakarta_Sans']">Welcome Back</h1>
-            <p class="text-xs sm:text-sm text-slate-500 mt-1">Access your donor dashboard or hospital portal</p>
+            <h1 class="auth-title">Welcome Back</h1>
+            <p class="auth-subtitle">Access your donor dashboard or hospital portal</p>
         </div>
 
         <!-- Form -->
-        <form action="{{ url_for('login') }}" method="POST" class="space-y-4">
-            <div>
-                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Email Address</label>
-                <div class="relative">
-                    <input type="email" name="email" id="loginEmail" required placeholder="name@lifepulse.org"
-                           class="w-full h-11 pl-10 pr-4 rounded-xl border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500">
-                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                        <i class="fa-solid fa-envelope text-xs"></i>
-                    </div>
+        <form action="{{ url_for('login') }}" method="POST">
+            <!-- Email Field with Embedded Icon -->
+            <div class="form-group">
+                <label class="form-label">Email Address *</label>
+                <div class="input-with-icon">
+                    <i class="fa-solid fa-envelope input-icon-left"></i>
+                    <input type="email" name="email" id="loginEmail" required placeholder="name@lifepulse.org" class="form-control">
                 </div>
             </div>
 
-            <div>
-                <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Password</label>
-                <div class="relative">
-                    <input type="password" name="password" id="loginPassword" required placeholder="••••••••"
-                           class="w-full h-11 pl-10 pr-10 rounded-xl border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500">
-                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                        <i class="fa-solid fa-lock text-xs"></i>
-                    </div>
-                    <button type="button" onclick="togglePasswordVisibility()" class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600">
-                        <i class="fa-solid fa-eye text-xs" id="pwdEyeIcon"></i>
+            <!-- Password Field with Embedded Icon & Toggle -->
+            <div class="form-group">
+                <label class="form-label">Password *</label>
+                <div class="input-with-icon">
+                    <i class="fa-solid fa-lock input-icon-left"></i>
+                    <input type="password" name="password" id="loginPassword" required placeholder="••••••••" class="form-control">
+                    <button type="button" onclick="togglePasswordVisibility()" class="toggle-pwd-btn" title="Toggle password view" aria-label="Toggle password view">
+                        <i class="fa-solid fa-eye" id="pwdEyeIcon"></i>
                     </button>
                 </div>
             </div>
 
-            <div class="flex items-center justify-between text-xs pt-1">
-                <label class="inline-flex items-center gap-2 cursor-pointer select-none text-slate-600">
-                    <input type="checkbox" checked class="w-4 h-4 text-red-600 rounded border-gray-300">
-                    <span>Keep me logged in</span>
+            <!-- Options Row -->
+            <div style="display: flex; justify-content: space-between; align-items: center; margin: 14px 0 20px 0; font-size: 13px;">
+                <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: var(--text-muted); font-size: 13px;">
+                    <input type="checkbox" checked style="accent-color: var(--primary); width: 16px; height: 16px;">
+                    <span>Keep me signed in</span>
                 </label>
-                <span class="text-primary-600 hover:text-primary-700 font-semibold cursor-pointer">Forgot password?</span>
+                <a href="javascript:void(0)" onclick="alert('For college demonstration, use the demo accounts below or click Create New Account.')" style="color: var(--primary); font-weight: 600; text-decoration: none;">
+                    Forgot password?
+                </a>
             </div>
 
-            <button type="submit" class="w-full h-11 bg-primary-600 hover:bg-primary-700 text-white font-bold text-sm rounded-xl transition-all shadow-md shadow-red-200 active:scale-95 flex items-center justify-center gap-2">
+            <button type="submit" class="btn btn-primary" style="width: 100%; height: 48px; font-size: 15px; border-radius: var(--radius-md);">
                 <i class="fa-solid fa-arrow-right-to-bracket"></i>
                 <span>Sign In to LifePulse</span>
             </button>
         </form>
 
-        <!-- College Viva One-Click Fast Login Section -->
-        <div class="mt-8 pt-6 border-t border-gray-100">
-            <div class="flex items-center gap-2 mb-3">
-                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <p class="text-xs font-bold text-slate-700 uppercase tracking-wider">Fast Demo Accounts (1-Click Test):</p>
+        <!-- College Viva One-Click Fast Demo Accounts Section -->
+        <div class="demo-accounts-box">
+            <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 8px;">
+                <span class="status-dot" style="background-color: var(--success); width: 8px; height: 8px;"></span>
+                <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--secondary); letter-spacing: 0.5px;">
+                    Fast Demo Accounts (1-Click Test):
+                </span>
             </div>
             
-            <div class="space-y-2 text-xs">
-                <button onclick="fillDemoLogin('nihil@lifepulse.org', 'password123')" 
-                        class="w-full p-2.5 rounded-xl border border-gray-200 hover:border-red-300 hover:bg-red-50/50 flex items-center justify-between transition-all text-left">
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <!-- Demo 1: Donor -->
+                <div class="demo-account-row" onclick="fillDemoLogin('nihil@lifepulse.org', 'password123')">
                     <div>
-                        <strong class="text-slate-800">nihil</strong> <span class="text-slate-500">(Donor, O+)</span>
-                        <div class="text-[11px] text-slate-400">nihil@lifepulse.org</div>
+                        <strong style="color: var(--secondary); font-size: 13px;">nihil</strong>
+                        <span style="color: var(--text-muted); font-size: 11px;">(Donor, O+)</span>
+                        <div style="font-size: 11px; color: var(--text-light); font-family: monospace;">nihil@lifepulse.org</div>
                     </div>
-                    <span class="px-2 py-1 rounded-md bg-red-100 text-red-700 font-bold text-[10px]">Autofill</span>
-                </button>
+                    <span class="badge badge-critical" style="font-size: 10px; padding: 3px 8px;">Autofill</span>
+                </div>
 
-                <button onclick="fillDemoLogin('sarah@mountsinai.org', 'hospital123')" 
-                        class="w-full p-2.5 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50/50 flex items-center justify-between transition-all text-left">
+                <!-- Demo 2: Hospital Coordinator -->
+                <div class="demo-account-row" onclick="fillDemoLogin('sarah@mountsinai.org', 'hospital123')">
                     <div>
-                        <strong class="text-slate-800">Dr. Sarah Jenkins</strong> <span class="text-slate-500">(Mount Sinai Hospital)</span>
-                        <div class="text-[11px] text-slate-400">sarah@mountsinai.org</div>
+                        <strong style="color: var(--secondary); font-size: 13px;">Dr. Sarah Jenkins</strong>
+                        <span style="color: var(--text-muted); font-size: 11px;">(Mount Sinai Hospital)</span>
+                        <div style="font-size: 11px; color: var(--text-light); font-family: monospace;">sarah@mountsinai.org</div>
                     </div>
-                    <span class="px-2 py-1 rounded-md bg-blue-100 text-blue-700 font-bold text-[10px]">Autofill</span>
-                </button>
+                    <span class="badge" style="background: #e0f2fe; color: #0284c7; border: 1px solid #bae6fd; font-size: 10px; padding: 3px 8px;">Autofill</span>
+                </div>
             </div>
         </div>
 
-        <div class="mt-6 text-center text-xs text-slate-500">
+        <!-- Footer Link -->
+        <div style="margin-top: 24px; text-align: center; font-size: 13px; color: var(--text-muted);">
             Don't have an account yet? 
-            <a href="{{ url_for('signup') }}" class="font-bold text-primary-600 hover:text-primary-700">Create New Account</a>
+            <a href="{{ url_for('signup') }}" style="color: var(--primary); font-weight: 700; text-decoration: none;">Create New Account</a>
         </div>
     </div>
-
 </div>
-{% endblock %}
 
-{% block scripts %}
 <script>
     function togglePasswordVisibility() {
         const pwdInput = document.getElementById('loginPassword');
         const eyeIcon = document.getElementById('pwdEyeIcon');
         if (pwdInput.type === 'password') {
             pwdInput.type = 'text';
-            eyeIcon.classList.replace('fa-eye', 'fa-eye-slash');
+            eyeIcon.classList.remove('fa-eye');
+            eyeIcon.classList.add('fa-eye-slash');
         } else {
             pwdInput.type = 'password';
-            eyeIcon.classList.replace('fa-eye-slash', 'fa-eye');
+            eyeIcon.classList.remove('fa-eye-slash');
+            eyeIcon.classList.add('fa-eye');
         }
     }
 
     function fillDemoLogin(email, pwd) {
         document.getElementById('loginEmail').value = email;
         document.getElementById('loginPassword').value = pwd;
-        showNotification("Demo credentials autofilled! Click 'Sign In'.", "info");
     }
 </script>
 {% endblock %}
