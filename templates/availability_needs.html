@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}Live Availability & Needs Matrix - LifePulse{% endblock %}
+
+{% block content %}
+<div class="container" style="padding-top: 30px; padding-bottom: 50px;">
+
+    <!-- Page Header & Action Bar -->
+    <div class="page-header">
+        <div>
+            <div class="badge badge-success" style="margin-bottom: 8px;">
+                <i class="fa-solid fa-scale-balanced"></i> Real-Time Supply & Demand Analytics
+            </div>
+            <h1 class="page-title">Live Blood Availability vs Emergency Needs</h1>
+            <p class="page-subtitle">
+                Compare blood bank inventory and available donors directly against hospital patient requirements with 1-click fulfillment.
+            </p>
+        </div>
+        <div class="flex gap-2" style="flex-wrap: wrap;">
+            <button onclick="openModal('urgentNeedModal')" class="btn btn-primary">
+                <i class="fa-solid fa-truck-medical"></i> Post Urgent Need
+            </button>
+            <button onclick="openModal('addInventoryModal')" class="btn btn-success">
+                <i class="fa-solid fa-boxes-stacked"></i> + Stock Blood Item
+            </button>
+            <button onclick="openModal('addBloodBankModal')" class="btn btn-outline-primary">
+                <i class="fa-solid fa-hospital"></i> + Register Blood Bank
+            </button>
+        </div>
+    </div>
+
+    <!-- 8 Blood Groups Availability Grid -->
+    <div style="margin-bottom: 32px;">
+        <h3 style="font-size: 16px; font-weight: 800; color: var(--secondary); margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-layer-group" style="color: var(--primary);"></i>
+            Central Reserve Breakdown (8 Blood Groups)
+        </h3>
+        <div class="grid-4">
+            {% for bg in blood_groups %}
+            {% set stock = stock_by_group[bg] %}
+            {% set donors = donors_by_group[bg] %}
+            <div class="card" style="padding: 16px; display: flex; align-items: center; gap: 14px; position: relative;">
+                <div class="blood-avatar" style="width: 48px; height: 48px; font-size: 15px; {% if stock == 0 %}background: #64748b;{% endif %}">
+                    {{ bg }}
+                </div>
+                <div style="flex: 1;">
+                    <div style="font-size: 11px; text-transform: uppercase; font-weight: 800; color: var(--text-muted); letter-spacing: 0.5px;">
+                        Group {{ bg }}
+                    </div>
+                    <div style="font-size: 20px; font-weight: 900; color: var(--secondary); line-height: 1.1;">
+                        {{ stock }} <span style="font-size: 12px; font-weight: 600; color: var(--text-muted);">Units</span>
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-muted); margin-top: 3px;">
+                        <i class="fa-solid fa-user-check" style="color: var(--success); margin-right: 3px;"></i> {{ donors }} Donor(s) Ready
+                    </div>
+                </div>
+                <div>
+                    {% if stock >= 10 %}
+                    <span class="badge badge-success" style="font-size: 10px; padding: 2px 6px;">Ample</span>
+                    {% elif stock > 0 %}
+                    <span class="badge badge-medium" style="font-size: 10px; padding: 2px 6px;">Moderate</span>
+                    {% else %}
+                    <span class="badge badge-critical" style="font-size: 10px; padding: 2px 6px;">Depleted</span>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Active Emergency Needs vs Stock Availability Matching Table -->
+    <div class="card" style="margin-bottom: 36px; padding: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <h3 style="font-size: 18px; font-weight: 800; color: var(--secondary); display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-code-compare" style="color: var(--primary);"></i>
+                    Patient Needs vs Blood Bank Stock Matching Engine
+                </h3>
+                <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                    Compares each patient's emergency requirement against live units in their assigned blood bank and regional city inventory.
+                </p>
+            </div>
+            <span class="badge badge-critical">
+                {{ needs|length }} Active Request(s)
+            </span>
+        </div>
+
+        {% if needs %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Patient & Hospital</th>
+                        <th>Blood Group</th>
+                        <th>Units Needed</th>
+                        <th>Bank Stock</th>
+                        <th>City Stock</th>
+                        <th>Match Status</th>
+                        <th style="text-align: right;">Action / Dispense</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for n in needs %}
+                    <tr>
+                        <td>
+                            <strong style="color: var(--secondary); font-size: 14px; display: block;">{{ n.patient_name }}</strong>
+                            <div style="font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 4px; margin-top: 2px;">
+                                <i class="fa-solid fa-hospital" style="color: #0284c7;"></i>
+                                <span>{{ n.bank_name or n.hospital_name }} ({{ n.city }})</span>
+                            </div>
+                            <span class="badge {% if n.urgency_level == 'CRITICAL NEED' %}badge-critical{% elif n.urgency_level == 'HIGH NEED' %}badge-high{% else %}badge-medium{% endif %}" style="margin-top: 4px; font-size: 9px; padding: 2px 6px;">
+                                {{ n.urgency_level }}
+                            </span>
+                        </td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <div class="blood-avatar" style="width: 36px; height: 36px; font-size: 13px;">
+                                    {{ n.blood_group }}
+                                </div>
+                                <div>
+                                    <strong style="color: var(--secondary); font-size: 13px;">{{ n.blood_group }}</strong>
+                                    <div style="font-size: 11px; color: var(--text-muted);">{{ n.component_type or 'Whole Blood' }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div style="font-weight: 700; color: var(--secondary);">
+                                {{ n.units_fulfilled or 0 }} / {{ n.units_needed }} Unit(s)
+                            </div>
+                            <div class="progress-container" style="width: 90px; height: 6px; margin: 4px 0 0 0;">
+                                <div class="progress-bar {% if (n.units_fulfilled or 0) >= n.units_needed %}fulfilled{% endif %}" 
+                                     style="width: {{ [(((n.units_fulfilled or 0) / n.units_needed) * 100)|int, 100]|min }}%;"></div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="units-pill" style="{% if n.bank_stock >= n.units_remaining %}background: #dcfce7; color: #15803d;{% elif n.bank_stock > 0 %}background: #fef3c7; color: #b45309;{% else %}background: #fee2e2; color: #b91c1c;{% endif %}">
+                                {{ n.bank_stock }} Available
+                            </span>
+                        </td>
+                        <td>
+                            <span class="units-pill">
+                                {{ n.city_stock }} Available
+                            </span>
+                        </td>
+                        <td>
+                            {% if n.can_fulfill_from_bank %}
+                            <span class="match-status-badge ready">
+                                <i class="fa-solid fa-circle-check"></i> Stock Match
+                            </span>
+                            {% elif n.can_fulfill_from_city %}
+                            <span class="match-status-badge partial">
+                                <i class="fa-solid fa-truck"></i> City Stock Match
+                            </span>
+                            {% else %}
+                            <span class="match-status-badge shortage">
+                                <i class="fa-solid fa-triangle-exclamation"></i> Critical Shortage
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: right;">
+                            {% if n.bank_stock > 0 and n.units_remaining > 0 %}
+                            <form action="{{ url_for('fulfill_from_stock') }}" method="POST" style="display: inline-block;">
+                                <input type="hidden" name="request_id" value="{{ n.id }}">
+                                <input type="hidden" name="blood_bank_id" value="{{ n.blood_bank_id }}">
+                                <input type="hidden" name="units" value="1">
+                                <button type="submit" class="btn btn-sm btn-success" title="Deduct 1 unit from stock and fulfill request">
+                                    <i class="fa-solid fa-check-double"></i> Fulfill 1 Unit
+                                </button>
+                            </form>
+                            {% elif n.units_remaining <= 0 %}
+                            <span class="badge badge-success" style="padding: 6px 10px;">
+                                <i class="fa-solid fa-circle-check"></i> Fully Fulfilled
+                            </span>
+                            {% else %}
+                            <a href="{{ url_for('donors_page', blood_group=n.blood_group, location=n.city) }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fa-solid fa-magnifying-glass"></i> Alert Donors
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div style="text-align: center; padding: 36px; background: #f8fafc; border-radius: var(--radius-md);">
+            <i class="fa-solid fa-shield-heart" style="font-size: 32px; color: var(--success); margin-bottom: 8px;"></i>
+            <h4 style="font-size: 16px; font-weight: 800; color: var(--secondary);">No Active Emergency Shortages</h4>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">All clinical transfusion requests are presently satisfied.</p>
+            <button onclick="openModal('urgentNeedModal')" class="btn btn-sm btn-primary">
+                + Post Emergency Need
+            </button>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Master Regional Blood Bank Inventory Items Table -->
+    <div class="card" style="padding: 24px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; flex-wrap: wrap; gap: 10px;">
+            <div>
+                <h3 style="font-size: 18px; font-weight: 800; color: var(--secondary); display: flex; align-items: center; gap: 8px;">
+                    <i class="fa-solid fa-boxes-stacked" style="color: var(--success);"></i>
+                    Master Blood Bank Inventory Registry (SQLite <code>blood_inventory</code>)
+                </h3>
+                <p style="font-size: 12px; color: var(--text-muted); margin-top: 2px;">
+                    Granular breakdown of stored items, blood components, batch expiry dates, and unit quantities.
+                </p>
+            </div>
+            <button onclick="openModal('addInventoryModal')" class="btn btn-sm btn-success">
+                <i class="fa-solid fa-plus"></i> Add Inventory Item
+            </button>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Blood Bank Facility</th>
+                        <th>City</th>
+                        <th>Blood Group</th>
+                        <th>Component Type</th>
+                        <th style="text-align: center;">Units Available</th>
+                        <th>Batch Expiry</th>
+                        <th>Inventory Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in detailed_inventory %}
+                    <tr>
+                        <td>
+                            <strong style="color: var(--secondary); font-size: 13px;">{{ item.bank_name }}</strong>
+                        </td>
+                        <td>
+                            <span style="color: var(--text-muted);"><i class="fa-solid fa-location-dot" style="font-size: 10px; margin-right: 3px;"></i> {{ item.bank_city }}</span>
+                        </td>
+                        <td>
+                            <strong style="color: var(--primary); font-size: 14px;">{{ item.blood_group }}</strong>
+                        </td>
+                        <td>
+                            <span style="font-weight: 500; color: var(--text-main);">{{ item.component_type }}</span>
+                        </td>
+                        <td style="text-align: center;">
+                            <span class="units-pill" style="{% if item.units_available > 3 %}background: #dcfce7; color: #15803d;{% else %}background: #fee2e2; color: #b91c1c;{% endif %}">
+                                {{ item.units_available }} Unit(s)
+                            </span>
+                        </td>
+                        <td>
+                            <span style="font-size: 12px; color: var(--text-muted);">{{ item.expiry_date or 'Standard (35d)' }}</span>
+                        </td>
+                        <td>
+                            {% if item.units_available > 3 %}
+                            <span class="badge badge-success" style="font-size: 10px; padding: 2px 7px;">In Stock</span>
+                            {% elif item.units_available > 0 %}
+                            <span class="badge badge-medium" style="font-size: 10px; padding: 2px 7px;">Low Stock</span>
+                            {% else %}
+                            <span class="badge badge-critical" style="font-size: 10px; padding: 2px 7px;">Depleted</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 30px; color: var(--text-muted);">
+                            No blood inventory items recorded in the database yet. Click "+ Stock Blood Item" to add units.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

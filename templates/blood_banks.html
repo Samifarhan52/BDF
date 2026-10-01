@@ -1,119 +1,219 @@
 {% extends "base.html" %}
 
-{% block title %}Hospital Blood Banks & Regional Stocks - LifePulse{% endblock %}
+{% block title %}Blood Banks & Clinical Inventory - LifePulse{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+<div class="container" style="padding-top: 30px; padding-bottom: 50px;">
 
-    <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+    <!-- Page Header & Action Bar -->
+    <div class="page-header">
         <div>
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-800 text-xs font-bold uppercase mb-2">
-                <i class="fa-solid fa-hospital text-blue-600"></i>
-                <span>Verified Clinical Facilities</span>
+            <div class="badge badge-success" style="margin-bottom: 8px;">
+                <i class="fa-solid fa-hospital-user"></i> Verified Clinical Transfusion Centers
             </div>
-            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight font-['Plus_Jakarta_Sans']">
-                Regional Blood Banks & Inventory
-            </h1>
-            <p class="text-sm text-slate-500 mt-1">
-                Monitor real-time hospital blood reserves to target urgent donor drives and critical emergency shortages.
+            <h1 class="page-title">Regional Blood Banks & Inventory</h1>
+            <p class="page-subtitle">
+                Monitor real-time hospital blood reserves, add registered blood banks, and stock item units directly in SQLite.
             </p>
         </div>
-        <div>
-            <button onclick="openUrgentModal()" class="bg-primary-600 hover:bg-primary-700 text-white font-bold text-sm px-4 py-2.5 rounded-xl shadow-xs inline-flex items-center gap-2 transition-all">
-                <i class="fa-solid fa-circle-plus"></i> Post Hospital Shortage
+        <div class="flex gap-2" style="flex-wrap: wrap;">
+            <button onclick="openModal('addBloodBankModal')" class="btn btn-outline-primary">
+                <i class="fa-solid fa-hospital"></i> + Register Blood Bank
+            </button>
+            <button onclick="openModal('addInventoryModal')" class="btn btn-success">
+                <i class="fa-solid fa-boxes-stacked"></i> + Stock Blood Item
+            </button>
+            <button onclick="openModal('urgentNeedModal')" class="btn btn-primary">
+                <i class="fa-solid fa-circle-plus"></i> Post Urgent Need
             </button>
         </div>
     </div>
 
     <!-- Filter Strip -->
-    <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm mb-8">
-        <form action="{{ url_for('blood_banks_page') }}" method="GET" class="flex flex-col sm:flex-row items-center gap-3">
-            <div class="relative flex-1 w-full">
-                <input type="text" name="city" value="{{ selected_city or '' }}" placeholder="Search by city (e.g. New York, Chennai, San Francisco, Chicago)..."
-                       class="w-full h-11 pl-10 pr-4 rounded-xl border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500">
-                <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
-                    <i class="fa-solid fa-magnifying-glass text-xs"></i>
-                </div>
+    <div class="filter-bar">
+        <form action="{{ url_for('blood_banks_page') }}" method="GET" class="flex items-center gap-3" style="flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 250px; position: relative;">
+                <input type="text" name="city" value="{{ selected_city or '' }}" 
+                       placeholder="Filter by city (e.g. New York, Chennai, San Francisco, Chicago)..."
+                       class="form-control" style="padding-left: 36px;">
+                <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-light); font-size: 13px;"></i>
             </div>
-            <button type="submit" class="w-full sm:w-auto h-11 px-6 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm rounded-xl transition-colors">
-                Filter Blood Banks
+            <button type="submit" class="btn btn-secondary">
+                <i class="fa-solid fa-filter"></i> Filter Facilities
             </button>
             {% if selected_city %}
-            <a href="{{ url_for('blood_banks_page') }}" class="h-11 px-4 rounded-xl border border-gray-300 hover:bg-gray-50 text-slate-600 flex items-center justify-center text-sm">
-                Reset
+            <a href="{{ url_for('blood_banks_page') }}" class="btn btn-outline">
+                <i class="fa-solid fa-rotate-left"></i> Reset Filter
             </a>
             {% endif %}
         </form>
     </div>
 
     <!-- Blood Banks Cards Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-12">
+    <div class="grid-2" style="margin-bottom: 40px;">
         {% for bank in blood_banks %}
-        <div class="bg-white rounded-3xl p-6 sm:p-7 border border-gray-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+        <div class="bank-card">
             <div>
-                <div class="flex items-start justify-between mb-3">
+                <!-- Top Header -->
+                <div class="bank-header">
                     <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center text-xl border border-blue-100 shadow-2xs">
-                            <i class="fa-solid fa-hospital-user"></i>
+                        <div class="bank-icon">
+                            <i class="fa-solid fa-hospital"></i>
                         </div>
                         <div>
-                            <h3 class="font-bold text-slate-900 text-lg leading-tight">{{ bank.name }}</h3>
-                            <div class="text-xs text-slate-500 mt-1 flex items-center gap-1.5">
-                                <i class="fa-solid fa-location-dot text-slate-400"></i>
-                                <span>{{ bank.city }} &bull; {{ bank.address }}</span>
+                            <h3 class="bank-title">{{ bank.name }}</h3>
+                            <div class="bank-subtitle">
+                                <i class="fa-solid fa-location-dot" style="color: var(--primary);"></i>
+                                <span>{{ bank.city }} &bull; {{ bank.address or bank.hospital_name }}</span>
                             </div>
                         </div>
                     </div>
+                    <span class="badge badge-success">
+                        <i class="fa-solid fa-circle-check"></i> Licensed
+                    </span>
                 </div>
 
-                <div class="my-4 py-3 px-4 rounded-2xl bg-slate-50 border border-slate-100 text-xs flex items-center justify-between text-slate-600">
-                    <span><i class="fa-regular fa-clock text-slate-400 mr-1"></i> {{ bank.operating_hours }}</span>
-                    <span class="font-bold text-emerald-600 flex items-center gap-1"><i class="fa-solid fa-circle-check"></i> Licensed</span>
+                <!-- Facility Metadata Bar -->
+                <div class="bank-meta-strip">
+                    <span><i class="fa-regular fa-clock" style="margin-right: 5px;"></i> {{ bank.operating_hours }}</span>
+                    <span><strong>Total Stock:</strong> {{ bank.total_units }} Unit(s)</span>
                 </div>
 
-                <!-- Blood Stock Gauges -->
-                <div class="mb-5">
-                    <div class="text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">Live Unit Reserves Status:</div>
-                    <div class="grid grid-cols-5 gap-2 text-center text-xs">
-                        <!-- O- -->
-                        <div class="p-2 rounded-xl border {% if bank.stock_o_neg == 'CRITICAL' %}bg-red-50 border-red-200 text-red-700{% elif bank.stock_o_neg == 'LOW' %}bg-amber-50 border-amber-200 text-amber-700{% else %}bg-emerald-50 border-emerald-200 text-emerald-700{% endif %}">
-                            <span class="block font-black text-sm">O-</span>
-                            <span class="text-[10px] font-bold">{{ bank.stock_o_neg }}</span>
-                        </div>
-                        <!-- O+ -->
-                        <div class="p-2 rounded-xl border {% if bank.stock_o_pos == 'CRITICAL' %}bg-red-50 border-red-200 text-red-700{% elif bank.stock_o_pos == 'LOW' %}bg-amber-50 border-amber-200 text-amber-700{% else %}bg-emerald-50 border-emerald-200 text-emerald-700{% endif %}">
-                            <span class="block font-black text-sm">O+</span>
-                            <span class="text-[10px] font-bold">{{ bank.stock_o_pos }}</span>
-                        </div>
-                        <!-- A+ -->
-                        <div class="p-2 rounded-xl border {% if bank.stock_a_pos == 'CRITICAL' %}bg-red-50 border-red-200 text-red-700{% elif bank.stock_a_pos == 'LOW' %}bg-amber-50 border-amber-200 text-amber-700{% else %}bg-emerald-50 border-emerald-200 text-emerald-700{% endif %}">
-                            <span class="block font-black text-sm">A+</span>
-                            <span class="text-[10px] font-bold">{{ bank.stock_a_pos }}</span>
-                        </div>
-                        <!-- B+ -->
-                        <div class="p-2 rounded-xl border {% if bank.stock_b_pos == 'CRITICAL' %}bg-red-50 border-red-200 text-red-700{% elif bank.stock_b_pos == 'LOW' %}bg-amber-50 border-amber-200 text-amber-700{% else %}bg-emerald-50 border-emerald-200 text-emerald-700{% endif %}">
-                            <span class="block font-black text-sm">B+</span>
-                            <span class="text-[10px] font-bold">{{ bank.stock_b_pos }}</span>
-                        </div>
-                        <!-- AB+ -->
-                        <div class="p-2 rounded-xl border {% if bank.stock_ab_pos == 'CRITICAL' %}bg-red-50 border-red-200 text-red-700{% elif bank.stock_ab_pos == 'LOW' %}bg-amber-50 border-amber-200 text-amber-700{% else %}bg-emerald-50 border-emerald-200 text-emerald-700{% endif %}">
-                            <span class="block font-black text-sm">AB+</span>
-                            <span class="text-[10px] font-bold">{{ bank.stock_ab_pos }}</span>
-                        </div>
+                <!-- Actions Strip for this specific blood bank -->
+                <div class="flex items-center justify-between mb-3" style="background: #eff6ff; padding: 8px 12px; border-radius: var(--radius-sm); border: 1px solid #bfdbfe;">
+                    <span style="font-size: 12px; font-weight: 700; color: #1e40af;">
+                        <i class="fa-solid fa-boxes-packing"></i> Manage Stored Units
+                    </span>
+                    <button onclick="openBankSpecificInventoryModal({{ bank.id }}, '{{ bank.name }}')" class="btn btn-sm btn-primary" style="padding: 4px 10px; font-size: 11px;">
+                        <i class="fa-solid fa-plus"></i> Add Item to this Bank
+                    </button>
+                </div>
+
+                <!-- Detailed Stored Items Table -->
+                <div style="margin-bottom: 16px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px;">
+                            Stored Inventory Items in SQLite:
+                        </span>
+                        <span style="font-size: 11px; color: var(--text-muted);">{{ bank.inventory_items|length }} Item Batches</span>
                     </div>
+
+                    {% if bank.inventory_items %}
+                    <div class="table-responsive" style="max-height: 220px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: var(--radius-sm);">
+                        <table class="inventory-table">
+                            <thead>
+                                <tr>
+                                    <th>Blood Group</th>
+                                    <th>Component</th>
+                                    <th style="text-align: center;">Units</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in bank.inventory_items %}
+                                <tr>
+                                    <td>
+                                        <strong style="color: var(--primary); font-size: 13px;">{{ item.blood_group }}</strong>
+                                    </td>
+                                    <td>
+                                        <span style="color: var(--text-main); font-weight: 500;">{{ item.component_type }}</span>
+                                        {% if item.expiry_date %}
+                                        <div style="font-size: 10px; color: var(--text-light);">Exp: {{ item.expiry_date }}</div>
+                                        {% endif %}
+                                    </td>
+                                    <td style="text-align: center;">
+                                        <span class="units-pill" style="{% if item.units_available > 3 %}background: #dcfce7; color: #15803d;{% else %}background: #fee2e2; color: #b91c1c;{% endif %}">
+                                            {{ item.units_available }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if item.units_available > 3 %}
+                                        <span class="badge badge-success" style="font-size: 10px; padding: 2px 6px;">In Stock</span>
+                                        {% elif item.units_available > 0 %}
+                                        <span class="badge badge-medium" style="font-size: 10px; padding: 2px 6px;">Low Stock</span>
+                                        {% else %}
+                                        <span class="badge badge-critical" style="font-size: 10px; padding: 2px 6px;">Depleted</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <div style="padding: 18px; text-align: center; background: #f8fafc; border: 1px dashed var(--border-color); border-radius: var(--radius-sm); font-size: 12px; color: var(--text-muted);">
+                        <i class="fa-solid fa-box-open" style="font-size: 20px; color: var(--text-light); margin-bottom: 6px; display: block;"></i>
+                        No blood items stocked yet in this bank.
+                        <button onclick="openBankSpecificInventoryModal({{ bank.id }}, '{{ bank.name }}')" style="display: block; margin: 8px auto 0; background: none; border: none; color: var(--primary); font-weight: 700; cursor: pointer; text-decoration: underline;">
+                            + Stock the first batch now
+                        </button>
+                    </div>
+                    {% endif %}
                 </div>
             </div>
 
-            <div class="pt-4 border-t border-gray-100 flex items-center justify-between gap-3">
-                <span class="text-xs font-mono text-slate-500"><i class="fa-solid fa-phone mr-1"></i> {{ bank.phone }}</span>
-                <a href="tel:{{ bank.phone }}" class="bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs px-4 py-2.5 rounded-xl inline-flex items-center gap-2 transition-colors">
-                    <i class="fa-solid fa-phone text-xs"></i> Contact Dispatch
-                </a>
+            <!-- Footer: Contact & Dispatch -->
+            <div class="flex items-center justify-between" style="padding-top: 14px; border-top: 1px solid var(--border-subtle);">
+                <div class="text-xs text-muted">
+                    <i class="fa-solid fa-phone" style="margin-right: 4px;"></i> {{ bank.phone }}
+                </div>
+                <div class="flex gap-2">
+                    <a href="tel:{{ bank.phone }}" class="btn btn-sm btn-secondary">
+                        <i class="fa-solid fa-phone"></i> Call Dispatch
+                    </a>
+                </div>
             </div>
+        </div>
+        {% else %}
+        <div style="grid-column: 1 / -1; background: #ffffff; padding: 48px; text-align: center; border-radius: var(--radius-lg); border: 1px dashed var(--border-color);">
+            <div style="width: 56px; height: 56px; background: #fee2e2; color: #dc2626; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 24px;">
+                <i class="fa-solid fa-hospital"></i>
+            </div>
+            <h3 style="font-size: 20px; font-weight: 800; color: var(--secondary); margin-bottom: 6px;">No Blood Banks Found</h3>
+            <p style="font-size: 13px; color: var(--text-muted); max-width: 450px; margin: 0 auto 20px;">
+                {% if selected_city %}No facility matches city "{{ selected_city }}". Try clearing the filter or registering a new facility.{% else %}No blood banks registered in the database yet.{% endif %}
+            </p>
+            <button onclick="openModal('addBloodBankModal')" class="btn btn-primary">
+                <i class="fa-solid fa-circle-plus"></i> Register First Blood Bank
+            </button>
         </div>
         {% endfor %}
     </div>
 
+    <!-- College Review Architecture Documentation Card -->
+    <div class="card" style="background: #f8fafc;">
+        <h4 style="font-size: 14px; font-weight: 800; color: var(--secondary); margin-bottom: 8px;">
+            <i class="fa-solid fa-database" style="color: var(--primary); margin-right: 6px;"></i>
+            SQLite Relational Architecture for Academic Demonstration
+        </h4>
+        <p style="font-size: 12px; color: var(--text-muted); line-height: 1.6; margin-bottom: 12px;">
+            Each blood bank entity (<code>blood_banks</code> table) maintains a 1-to-many relationship with <code>blood_inventory</code> rows. Adding new items or fulfilling emergency requests directly updates SQLite records via atomic SQL transactions.
+        </p>
+        <div class="grid-3" style="font-size: 12px;">
+            <div style="background: #ffffff; padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                <strong style="color: var(--secondary); display: block; margin-bottom: 4px;">Table: blood_banks</strong>
+                Stores facility ID, legal name, affiliated hospital, city, direct emergency telephone, and operational coverage hours.
+            </div>
+            <div style="background: #ffffff; padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                <strong style="color: var(--secondary); display: block; margin-bottom: 4px;">Table: blood_inventory</strong>
+                Stores item units partitioned by <code>blood_bank_id</code>, <code>blood_group</code>, and <code>component_type</code> (PRBC, Platelets, FFP).
+            </div>
+            <div style="background: #ffffff; padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                <strong style="color: var(--secondary); display: block; margin-bottom: 4px;">Fulfillment Flow</strong>
+                When an emergency request is matched, units are deducted from <code>blood_inventory</code> and updated in <code>urgent_requests</code>.
+            </div>
+        </div>
+    </div>
+
 </div>
+
+<script>
+    function openBankSpecificInventoryModal(bankId, bankName) {
+        const select = document.getElementById('modalBankIdSelect');
+        if (select) {
+            select.value = bankId;
+        }
+        openModal('addInventoryModal');
+    }
+</script>
 {% endblock %}

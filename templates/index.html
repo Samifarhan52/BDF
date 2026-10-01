@@ -1,210 +1,191 @@
 {% extends "base.html" %}
 
-{% block title %}LifePulse - Seconds Save Lives. Find Blood Donors Near You{% endblock %}
+{% block title %}LifePulse - Seconds Save Lives. Find Blood Donors & Banks Near You{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12">
+<div class="container" style="padding-top: 30px; padding-bottom: 50px;">
 
-    <!-- HERO SECTION (Matching Screenshot 1) -->
-    <div class="text-center max-w-3xl mx-auto mb-10 sm:mb-12">
-        <!-- Matching Engine Pill Badge -->
-        <div class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-red-100 text-red-700 text-xs sm:text-sm font-bold tracking-wide uppercase mb-6 shadow-2xs">
-            <i class="fa-solid fa-bolt text-red-600 animate-pulse"></i>
-            <span>Real-Time Matching Engine</span>
+    <!-- HERO SECTION -->
+    <div class="hero">
+        <div class="hero-badge">
+            <i class="fa-solid fa-bolt" style="color: var(--primary);"></i>
+            <span>Real-Time Matching &amp; Blood Inventory Engine</span>
         </div>
 
-        <!-- Main Heading -->
-        <h1 class="text-4xl sm:text-5xl lg:text-6xl font-extrabold text-slate-900 tracking-tight leading-[1.15] mb-5 font-['Plus_Jakarta_Sans']">
+        <h1 class="hero-title">
             Seconds Save Lives.<br>
-            <span class="text-slate-900">Find Blood Donors Near You.</span>
+            <span style="color: var(--primary);">Find Blood Donors &amp; Bank Stocks.</span>
         </h1>
 
-        <!-- Subtitle -->
-        <p class="text-base sm:text-lg text-slate-600 leading-relaxed font-normal">
-            Direct, secure connection between blood donors and recipients in critical need. Medical compatibility and spatial distance matched instantly.
+        <p class="hero-subtitle">
+            Direct, secure connection between blood donors, hospital blood banks, and recipients in critical need. Real-time availability, compatibility matching, and urgent dispatch.
         </p>
+
+        <div style="display: flex; justify-content: center; gap: 12px; margin-top: 24px; flex-wrap: wrap;">
+            <a href="{{ url_for('availability_and_needs') }}" class="btn btn-success">
+                <i class="fa-solid fa-chart-pie"></i> View Live Availability &amp; Needs
+            </a>
+            <a href="{{ url_for('blood_banks_page') }}" class="btn btn-secondary">
+                <i class="fa-solid fa-hospital"></i> Blood Banks &amp; Items
+            </a>
+            <button onclick="openModal('urgentNeedModal')" class="btn btn-primary">
+                <i class="fa-solid fa-truck-medical"></i> Post Urgent Need
+            </button>
+        </div>
     </div>
 
-    <!-- MAIN SEARCH CARD (Matching Screenshot 1) -->
-    <div class="bg-white rounded-2xl p-5 sm:p-7 shadow-lg shadow-slate-200/50 border border-gray-100 mb-12 max-w-5xl mx-auto">
-        <form action="{{ url_for('index') }}" method="GET" id="searchForm" class="space-y-4">
-            <div class="grid grid-cols-1 md:grid-cols-12 gap-3 sm:gap-4 items-end">
+    <!-- MAIN SEARCH CARD -->
+    <div class="search-card">
+        <form action="{{ url_for('index') }}" method="GET" id="searchForm">
+            <div class="search-form-grid">
                 <!-- Blood Group Dropdown -->
-                <div class="md:col-span-4">
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                        <i class="fa-solid fa-droplet text-red-500"></i>
-                        <span>Recipient Blood Group</span>
+                <div>
+                    <label class="form-label">
+                        <i class="fa-solid fa-droplet" style="color: var(--primary);"></i> Recipient Blood Group
                     </label>
-                    <div class="relative">
-                        <select name="blood_group" id="bloodGroupInput" 
-                                class="w-full h-12 pl-4 pr-10 rounded-xl border border-gray-200 bg-gray-50/50 text-slate-800 text-sm font-semibold focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all cursor-pointer">
-                            <option value="">Select Needed Group...</option>
-                            {% for bg in blood_groups %}
-                                <option value="{{ bg }}" {% if selected_group == bg %}selected{% endif %}>{{ bg }}</option>
-                            {% endfor %}
-                        </select>
-                        <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3.5 text-gray-500">
-                            <i class="fa-solid fa-chevron-down text-xs"></i>
-                        </div>
-                    </div>
+                    <select name="blood_group" id="bloodGroupInput" class="form-select">
+                        <option value="">Select Needed Group...</option>
+                        {% for bg in blood_groups %}
+                            <option value="{{ bg }}" {% if selected_group == bg %}selected{% endif %}>{{ bg }}</option>
+                        {% endfor %}
+                    </select>
                 </div>
 
                 <!-- City / Zip Input -->
-                <div class="md:col-span-4">
-                    <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                        <i class="fa-solid fa-location-dot text-red-500"></i>
-                        <span>City or Zip Code</span>
+                <div>
+                    <label class="form-label">
+                        <i class="fa-solid fa-location-dot" style="color: var(--primary);"></i> City or Zip Code
                     </label>
-                    <div class="relative">
-                        <input type="text" name="location" id="locationInput" value="{{ search_location or '' }}" 
-                               placeholder="e.g. New York or 10001" 
-                               class="w-full h-12 pl-4 pr-4 rounded-xl border border-gray-200 bg-gray-50/50 text-slate-800 text-sm font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent transition-all">
-                    </div>
+                    <input type="text" name="location" id="locationInput" value="{{ search_location or '' }}" 
+                           placeholder="e.g. New York, Chennai, Chicago..." class="form-control">
                 </div>
 
                 <!-- GPS Location Button -->
-                <div class="md:col-span-2">
-                    <button type="button" onclick="useCurrentLocation()" id="gpsBtn"
-                            class="w-full h-12 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs sm:text-sm flex items-center justify-center gap-2 border border-gray-200 transition-all active:scale-95 shadow-2xs">
-                        <i class="fa-solid fa-crosshairs text-slate-600"></i>
-                        <span class="truncate">Use GPS Location</span>
+                <div>
+                    <button type="button" onclick="useCurrentLocation()" id="gpsBtn" class="btn btn-outline" style="width: 100%; height: 46px;">
+                        <i class="fa-solid fa-crosshairs"></i> GPS Location
                     </button>
                 </div>
 
                 <!-- Submit Button -->
-                <div class="md:col-span-2">
-                    <button type="submit" 
-                            class="w-full h-12 rounded-xl bg-primary-600 hover:bg-primary-700 text-white font-bold text-sm flex items-center justify-center gap-2 shadow-md shadow-red-200 transition-all active:scale-95">
-                        <i class="fa-solid fa-magnifying-glass"></i>
-                        <span class="truncate">Find Available Donors</span>
+                <div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%; height: 46px;">
+                        <i class="fa-solid fa-magnifying-glass"></i> Find Donors
                     </button>
                 </div>
             </div>
 
             <!-- Intelligent Matching Sub-bar -->
-            <div class="pt-2 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500 border-t border-gray-100">
-                <label class="inline-flex items-center gap-2 cursor-pointer select-none">
-                    <input type="checkbox" name="compatible" value="true" {% if compatible_mode %}checked{% endif %} class="w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500">
-                    <span class="font-medium text-slate-700">Include medically compatible blood groups (e.g. O- universal donors for emergency)</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border-subtle); font-size: 12px; color: var(--text-muted);">
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <input type="checkbox" name="compatible" value="true" {% if compatible_mode %}checked{% endif %}>
+                    <span>Include medically compatible blood groups (e.g. O- universal donors)</span>
                 </label>
-                <div class="flex items-center gap-3">
-                    <span class="hidden sm:inline">Popular:</span>
-                    <button type="button" onclick="quickFill('O-', 'New York')" class="hover:text-red-600 underline">O- New York</button>
-                    <button type="button" onclick="quickFill('A+', 'San Francisco')" class="hover:text-red-600 underline">A+ San Francisco</button>
-                    <button type="button" onclick="quickFill('O-', 'Chennai')" class="hover:text-red-600 underline">O- Chennai</button>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span>Quick Fill:</span>
+                    <button type="button" onclick="quickFill('O-', 'New York')" style="background: none; border: none; color: var(--primary); text-decoration: underline; cursor: pointer; font-size: 12px;">O- New York</button>
+                    <button type="button" onclick="quickFill('A+', 'Chennai')" style="background: none; border: none; color: var(--primary); text-decoration: underline; cursor: pointer; font-size: 12px;">A+ Chennai</button>
+                    <button type="button" onclick="quickFill('B+', 'Chicago')" style="background: none; border: none; color: var(--primary); text-decoration: underline; cursor: pointer; font-size: 12px;">B+ Chicago</button>
                 </div>
             </div>
         </form>
     </div>
 
-    <!-- STATS COUNTER ROW (Matching Screenshot 1 & 2) -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5 mb-14 max-w-5xl mx-auto">
+    <!-- STATS COUNTER ROW -->
+    <div class="stats-row">
         <!-- Card 1: Verified Donors -->
-        <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-            <div class="w-14 h-14 rounded-2xl bg-red-100 text-primary-600 flex items-center justify-center text-2xl flex-shrink-0">
+        <div class="stat-card">
+            <div class="stat-icon">
                 <i class="fa-solid fa-users"></i>
             </div>
             <div>
-                <div class="text-3xl font-extrabold text-slate-900 leading-tight font-['Plus_Jakarta_Sans']">{{ stats.available_donors }}</div>
-                <div class="text-xs sm:text-sm font-semibold text-slate-500">Available Verified Donors</div>
+                <div class="stat-number">{{ stats.available_donors }}</div>
+                <div class="stat-label">Available Verified Donors</div>
             </div>
         </div>
 
-        <!-- Card 2: Active Urgent Requests -->
-        <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-            <div class="w-14 h-14 rounded-2xl bg-red-100 text-primary-600 flex items-center justify-center text-2xl flex-shrink-0">
+        <!-- Card 2: Blood Bank Stock Units -->
+        <div class="stat-card">
+            <div class="stat-icon" style="background: #e0f2fe; color: #0284c7;">
+                <i class="fa-solid fa-hospital"></i>
+            </div>
+            <div>
+                <div class="stat-number">{{ stats.total_stock_units }}</div>
+                <div class="stat-label">Bank Stored Units ({{ stats.blood_banks_count }} Facilities)</div>
+            </div>
+        </div>
+
+        <!-- Card 3: Active Urgent Requests -->
+        <div class="stat-card">
+            <div class="stat-icon">
                 <i class="fa-solid fa-truck-medical"></i>
             </div>
             <div>
-                <div class="text-3xl font-extrabold text-slate-900 leading-tight font-['Plus_Jakarta_Sans']">{{ stats.urgent_requests }}</div>
-                <div class="text-xs sm:text-sm font-semibold text-slate-500">Active Urgent Requests</div>
-            </div>
-        </div>
-
-        <!-- Card 3: Estimated Lives Impacted -->
-        <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm flex items-center gap-4 hover:shadow-md transition-shadow">
-            <div class="w-14 h-14 rounded-2xl bg-red-100 text-primary-600 flex items-center justify-center text-2xl flex-shrink-0">
-                <i class="fa-solid fa-heart-pulse"></i>
-            </div>
-            <div>
-                <div class="text-3xl font-extrabold text-slate-900 leading-tight font-['Plus_Jakarta_Sans']">{{ stats.lives_impacted }}</div>
-                <div class="text-xs sm:text-sm font-semibold text-slate-500">Estimated Lives Impacted</div>
+                <div class="stat-number">{{ stats.urgent_requests }}</div>
+                <div class="stat-label">Active Urgent Requests</div>
             </div>
         </div>
     </div>
 
     <!-- SEARCH RESULTS SECTION (If search was triggered) -->
     {% if search_performed %}
-    <div id="searchResultsSection" class="mb-14 scroll-mt-24">
-        <div class="flex items-center justify-between mb-6 pb-2 border-b border-gray-200">
+    <div style="margin-bottom: 48px;">
+        <div class="page-header" style="margin-top: 0;">
             <div>
-                <h2 class="text-2xl font-bold text-slate-900 flex items-center gap-2">
-                    <i class="fa-solid fa-magnifying-glass text-primary-600"></i>
-                    <span>Search Results</span>
+                <h2 style="font-size: 22px; font-weight: 800; color: var(--secondary);">
+                    <i class="fa-solid fa-magnifying-glass" style="color: var(--primary);"></i> Donor Search Results
                 </h2>
-                <p class="text-xs sm:text-sm text-slate-500">
-                    Showing donors matching blood group <strong>{{ selected_group or 'All' }}</strong> {% if search_location %}in <strong>{{ search_location }}</strong>{% endif %} ({{ donors|length }} found)
+                <p style="font-size: 13px; color: var(--text-muted);">
+                    Matching blood group <strong>{{ selected_group or 'All' }}</strong> {% if search_location %}in <strong>{{ search_location }}</strong>{% endif %} ({{ donors|length }} found)
                 </p>
             </div>
-            <a href="{{ url_for('donors_page', blood_group=selected_group, location=search_location) }}" class="text-xs sm:text-sm font-semibold text-primary-600 hover:text-primary-700">
+            <a href="{{ url_for('donors_page', blood_group=selected_group, location=search_location) }}" class="btn btn-outline" style="font-size: 12px;">
                 View all in Directory &rarr;
             </a>
         </div>
 
         {% if donors %}
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div class="grid-3">
             {% for donor in donors %}
-            <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm hover:shadow-md transition-all relative flex flex-col justify-between">
+            <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
                 <div>
-                    <div class="flex items-start justify-between mb-3">
+                    <div class="flex items-center justify-between mb-3">
                         <div class="flex items-center gap-3">
-                            <div class="w-12 h-12 rounded-xl bg-gradient-to-tr from-slate-100 to-slate-200 text-slate-700 flex items-center justify-center font-bold text-lg border border-gray-200">
-                                {{ donor.name[0] }}
+                            <div class="blood-avatar" style="width: 42px; height: 42px; font-size: 14px;">
+                                {{ donor.blood_group }}
                             </div>
                             <div>
-                                <h4 class="font-bold text-slate-900 text-base flex items-center gap-1.5">
+                                <h4 style="font-size: 15px; font-weight: 800; color: var(--secondary);">
                                     {{ donor.name }}
                                     {% if donor.is_verified %}
-                                        <i class="fa-solid fa-circle-check text-blue-500 text-xs" title="Verified Donor"></i>
+                                    <i class="fa-solid fa-circle-check" style="color: #0284c7; font-size: 11px;"></i>
                                     {% endif %}
                                 </h4>
-                                <div class="text-xs text-slate-500 flex items-center gap-1">
-                                    <i class="fa-solid fa-location-dot text-slate-400"></i>
-                                    <span>{{ donor.city }}, {{ donor.state or '' }}</span>
+                                <div style="font-size: 12px; color: var(--text-muted);">
+                                    <i class="fa-solid fa-location-dot" style="color: var(--primary); font-size: 10px;"></i> {{ donor.city }}, {{ donor.state or '' }}
                                 </div>
                             </div>
                         </div>
-
-                        <!-- Blood Group Badge -->
-                        <div class="w-11 h-11 rounded-full bg-primary-600 text-white font-extrabold flex items-center justify-center text-sm shadow-md shadow-red-200">
-                            {{ donor.blood_group }}
-                        </div>
+                        <span class="badge badge-success" style="font-size: 10px;">Available</span>
                     </div>
 
-                    <div class="bg-slate-50 rounded-xl p-3 mb-4 text-xs space-y-1 text-slate-600 border border-slate-100">
-                        <div class="flex justify-between">
-                            <span class="text-slate-400">Donations Count:</span>
-                            <span class="font-semibold text-slate-800">{{ donor.donations_count }} times</span>
+                    <div style="background: #f8fafc; padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); font-size: 12px; margin-bottom: 14px;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+                            <span style="color: var(--text-muted);">Donations:</span>
+                            <strong>{{ donor.donations_count }} time(s)</strong>
                         </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-400">Last Donated:</span>
-                            <span class="font-semibold text-slate-800">{{ donor.last_donation_date or 'Ready to donate' }}</span>
-                        </div>
-                        <div class="flex justify-between">
-                            <span class="text-slate-400">Status:</span>
-                            <span class="font-semibold {% if donor.is_available %}text-emerald-600{% else %}text-slate-400{% endif %}">
-                                {% if donor.is_available %}● Available Now{% else %}○ Temporarily Unavailable{% endif %}
-                            </span>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-muted);">Age &amp; Weight:</span>
+                            <strong>{{ donor.age or '25' }} yrs &bull; {{ donor.weight_kg or '60' }} kg</strong>
                         </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100">
-                    <a href="tel:{{ donor.phone }}" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-colors">
-                        <i class="fa-solid fa-phone text-slate-600"></i> Call
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding-top: 10px; border-top: 1px solid var(--border-subtle);">
+                    <a href="tel:{{ donor.phone }}" class="btn btn-sm btn-outline">
+                        <i class="fa-solid fa-phone"></i> Call
                     </a>
-                    <button onclick="openContactModal('{{ donor.name }}', '{{ donor.blood_group }}', '{{ donor.city }}', '{{ donor.phone }}')"
-                            class="w-full bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-colors shadow-xs">
+                    <button onclick="openDonorContactModal('{{ donor.name }}', '{{ donor.blood_group }}', '{{ donor.city }}', '{{ donor.phone }}')" class="btn btn-sm btn-primary">
                         <i class="fa-solid fa-paper-plane"></i> Connect
                     </button>
                 </div>
@@ -212,15 +193,15 @@
             {% endfor %}
         </div>
         {% else %}
-        <div class="bg-white rounded-2xl p-10 text-center border border-dashed border-gray-300">
-            <div class="w-14 h-14 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-3 text-xl">
+        <div style="background: #ffffff; padding: 40px; text-align: center; border-radius: var(--radius-lg); border: 1px dashed var(--border-color);">
+            <div style="width: 50px; height: 50px; background: #fee2e2; color: #dc2626; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 12px; font-size: 20px;">
                 <i class="fa-solid fa-user-slash"></i>
             </div>
-            <h4 class="text-lg font-bold text-slate-900 mb-1">No matching donors found</h4>
-            <p class="text-sm text-slate-500 max-w-md mx-auto mb-4">
-                We couldn't find an exact match right now. Try checking "Include medically compatible blood groups" or submit an urgent blood request to alert the community.
+            <h4 style="font-size: 18px; font-weight: 800; color: var(--secondary); margin-bottom: 6px;">No exact matching donors found</h4>
+            <p style="font-size: 13px; color: var(--text-muted); max-width: 450px; margin: 0 auto 16px;">
+                Check "Include medically compatible blood groups" or broadcast an urgent request directly to nearby blood banks.
             </p>
-            <button onclick="openUrgentModal()" class="bg-primary-600 hover:bg-primary-700 text-white font-semibold text-xs px-4 py-2.5 rounded-xl shadow-xs">
+            <button onclick="openModal('urgentNeedModal')" class="btn btn-primary">
                 Broadcast Urgent Blood Need
             </button>
         </div>
@@ -228,115 +209,104 @@
     </div>
     {% endif %}
 
-    <!-- ACTIVE URGENT BLOOD NEEDS SECTION (Matching Screenshot 2) -->
-    <div id="urgent-section" class="mb-14">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+    <!-- ACTIVE URGENT BLOOD NEEDS SECTION -->
+    <div style="margin-bottom: 48px;">
+        <div class="page-header">
             <div>
-                <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900 flex items-center gap-2.5 font-['Plus_Jakarta_Sans']">
-                    <span class="w-7 h-7 rounded-full bg-slate-900 text-white flex items-center justify-center text-sm">
+                <h2 style="font-size: 24px; font-weight: 900; color: var(--secondary); display: flex; align-items: center; gap: 10px;">
+                    <span style="width: 28px; height: 28px; background: var(--secondary); color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 13px;">
                         <i class="fa-solid fa-exclamation"></i>
                     </span>
-                    <span>Active Urgent Blood Needs</span>
+                    Active Urgent Blood Needs
                 </h2>
-                <p class="text-sm text-slate-500 mt-1">
-                    Hospitals and individuals currently requiring critical blood supplies
+                <p style="font-size: 13px; color: var(--text-muted); margin-top: 3px;">
+                    Hospitals and clinical centers currently requiring critical emergency blood supplies.
                 </p>
             </div>
-            <div>
-                <button onclick="openUrgentModal()" class="border-2 border-primary-600 text-primary-600 hover:bg-primary-50 px-4 py-2 rounded-xl text-sm font-bold flex items-center gap-1.5 transition-all active:scale-95 shadow-2xs">
-                    <i class="fa-solid fa-plus"></i>
-                    <span>Submit Request</span>
+            <div class="flex gap-2">
+                <a href="{{ url_for('availability_and_needs') }}" class="btn btn-outline" style="color: #059669; border-color: #059669;">
+                    <i class="fa-solid fa-chart-pie"></i> Match with Stock
+                </a>
+                <button onclick="openModal('urgentNeedModal')" class="btn btn-primary">
+                    <i class="fa-solid fa-circle-plus"></i> Post Urgent Need
                 </button>
             </div>
         </div>
 
-        <!-- URGENT CARDS GRID (Exact Layout from Screenshot 2) -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div class="grid-3">
             {% for req in urgent_requests %}
-            <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-md hover:shadow-lg transition-all relative flex flex-col justify-between group">
+            <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
                 <div>
                     <!-- Header with Urgency Pill and Blood Group Circular Badge -->
-                    <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center justify-between mb-3">
                         <div>
                             {% if req.urgency_level == 'CRITICAL NEED' %}
-                                <span class="px-3 py-1 rounded-full text-xs font-extrabold tracking-wide uppercase bg-red-100 text-red-700 border border-red-200">
-                                    CRITICAL NEED
-                                </span>
+                                <span class="badge badge-critical">CRITICAL NEED</span>
                             {% elif req.urgency_level == 'HIGH NEED' %}
-                                <span class="px-3 py-1 rounded-full text-xs font-extrabold tracking-wide uppercase bg-amber-100 text-amber-800 border border-amber-200">
-                                    HIGH NEED
-                                </span>
+                                <span class="badge badge-high">HIGH NEED</span>
                             {% else %}
-                                <span class="px-3 py-1 rounded-full text-xs font-extrabold tracking-wide uppercase bg-orange-100 text-orange-800 border border-orange-200">
-                                    MEDIUM NEED
-                                </span>
+                                <span class="badge badge-medium">MEDIUM NEED</span>
                             {% endif %}
                         </div>
-
-                        <!-- Blood Group Red Circle Badge (Matching Screenshot 2) -->
-                        <div class="w-12 h-12 rounded-full bg-primary-600 text-white font-extrabold flex items-center justify-center text-base shadow-md shadow-red-300 ring-4 ring-red-50">
+                        <div class="blood-avatar" style="width: 44px; height: 44px; font-size: 15px;">
                             {{ req.blood_group }}
                         </div>
                     </div>
 
                     <!-- Patient Name -->
-                    <h3 class="text-xl font-bold text-slate-900 mb-4">
+                    <h3 style="font-size: 18px; font-weight: 800; color: var(--secondary); margin-bottom: 10px;">
                         Patient: {{ req.patient_name }}
                     </h3>
 
                     <!-- Hospital Info -->
-                    <div class="space-y-2.5 text-xs sm:text-sm text-slate-600 mb-5">
-                        <div class="flex items-center gap-2.5">
-                            <i class="fa-solid fa-hospital text-primary-600 w-4 text-center"></i>
-                            <span class="font-medium text-slate-800">{{ req.hospital_name }}</span>
+                    <div style="font-size: 13px; color: var(--text-muted); display: flex; flex-direction: column; gap: 6px; margin-bottom: 14px;">
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-hospital" style="color: var(--primary); width: 14px;"></i>
+                            <span style="font-weight: 600; color: var(--text-main);">{{ req.hospital_name }}</span>
                         </div>
-                        <div class="flex items-center gap-2.5">
-                            <i class="fa-solid fa-droplet text-primary-600 w-4 text-center"></i>
-                            <span>Needed Units: <strong class="text-slate-800">{{ req.units_needed }} Unit(s)</strong></span>
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-droplet" style="color: var(--primary); width: 14px;"></i>
+                            <span>Needed Units: <strong style="color: var(--secondary);">{{ req.units_needed }} Unit(s)</strong></span>
                         </div>
-                        <div class="flex items-center gap-2.5">
-                            <i class="fa-solid fa-phone text-primary-600 w-4 text-center"></i>
-                            <span>Hotline: <strong class="text-slate-800">{{ req.hotline }}</strong></span>
+                        <div class="flex items-center gap-2">
+                            <i class="fa-solid fa-phone" style="color: var(--primary); width: 14px;"></i>
+                            <span>Hotline: <strong style="color: var(--secondary); font-family: monospace;">{{ req.hotline }}</strong></span>
                         </div>
                         {% if req.notes %}
-                        <div class="flex items-start gap-2.5 text-slate-500 italic pt-1">
-                            <i class="fa-solid fa-circle-info text-primary-600 w-4 text-center mt-0.5"></i>
-                            <span>&ldquo;{{ req.notes }}&rdquo;</span>
+                        <div style="font-style: italic; font-size: 12px; background: #f8fafc; padding: 6px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); margin-top: 4px;">
+                            &ldquo;{{ req.notes }}&rdquo;
                         </div>
                         {% endif %}
                     </div>
 
-                    <!-- Real-Time Fulfillment Tracker (Trackable College Project Feature) -->
-                    <div class="mb-4 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                        <div class="flex justify-between text-xs font-semibold mb-1">
-                            <span class="text-slate-600">Pledged: <strong id="pledge-count-{{ req.id }}">{{ req.units_fulfilled or 0 }}</strong> of {{ req.units_needed }} Unit(s)</span>
-                            <span class="text-primary-700 font-bold" id="pledge-pct-{{ req.id }}">
+                    <!-- Real-Time Fulfillment Tracker -->
+                    <div style="background: #f8fafc; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 8px 10px; margin-bottom: 14px;">
+                        <div class="flex justify-between" style="font-size: 11px; font-weight: 700; margin-bottom: 3px;">
+                            <span>Pledged: <strong>{{ req.units_fulfilled or 0 }}</strong> of {{ req.units_needed }} Unit(s)</span>
+                            <span style="color: var(--primary);">
                                 {{ [(((req.units_fulfilled or 0) / req.units_needed) * 100)|int, 100]|min }}%
                             </span>
                         </div>
-                        <div class="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
-                            <div id="pledge-bar-{{ req.id }}" class="h-full bg-gradient-to-r from-red-600 to-rose-500 rounded-full transition-all duration-500" 
+                        <div class="progress-container" style="margin: 0; height: 6px;">
+                            <div class="progress-bar {% if (req.units_fulfilled or 0) >= req.units_needed %}fulfilled{% endif %}" 
                                  style="width: {{ [(((req.units_fulfilled or 0) / req.units_needed) * 100)|int, 100]|min }}%;"></div>
                         </div>
                     </div>
                 </div>
 
                 <!-- Action Buttons -->
-                <div class="pt-3 border-t border-gray-100 space-y-2">
-                    <button onclick="openVolunteerModal({{ req.id }}, '{{ req.patient_name }}', '{{ req.blood_group }}', '{{ req.hospital_name }}')"
-                            class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-xs active:scale-95">
-                        <i class="fa-solid fa-hand-holding-heart"></i>
-                        <span>Volunteer / I Can Donate</span>
-                    </button>
-                    <div class="flex items-center gap-2">
-                        <a href="tel:{{ req.hotline }}" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs py-2 rounded-xl flex items-center justify-center gap-2 transition-colors">
-                            <i class="fa-solid fa-phone text-slate-600"></i>
-                            <span>Hotline: {{ req.hotline }}</span>
+                <div style="padding-top: 12px; border-top: 1px solid var(--border-subtle); display: flex; flex-direction: column; gap: 8px;">
+                    <a href="{{ url_for('urgent_needs_page') }}" class="btn btn-success" style="width: 100%;">
+                        <i class="fa-solid fa-hand-holding-heart"></i> Volunteer / Pledge Donation
+                    </a>
+                    <div class="flex gap-2">
+                        <a href="tel:{{ req.hotline }}" class="btn btn-sm btn-outline" style="flex: 1;">
+                            <i class="fa-solid fa-phone"></i> Hotline
                         </a>
-                        <button onclick="shareUrgentNeed('{{ req.patient_name }}', '{{ req.blood_group }}', '{{ req.hospital_name }}')" 
-                                class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors" title="Share emergency">
-                            <i class="fa-solid fa-share-nodes text-xs"></i>
-                        </button>
+                        <a href="https://wa.me/?text=Emergency%20Blood%20Needed!%20Patient:%20{{ req.patient_name }}%20Group:%20{{ req.blood_group }}%20at%20{{ req.hospital_name }}%20Hotline:%20{{ req.hotline }}" 
+                           target="_blank" class="btn btn-sm btn-outline" style="color: #16a34a; border-color: #bbf7d0;" title="WhatsApp">
+                            <i class="fa-brands fa-whatsapp"></i> WhatsApp
+                        </a>
                     </div>
                 </div>
             </div>
@@ -344,98 +314,151 @@
         </div>
     </div>
 
-    <!-- INTERACTIVE MAP PREVIEW (Great for College Project Demonstration!) -->
-    <div class="bg-white rounded-2xl p-6 sm:p-7 border border-gray-100 shadow-md mb-14">
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-            <div>
-                <h3 class="text-xl font-bold text-slate-900 flex items-center gap-2">
-                    <i class="fa-solid fa-map-location-dot text-primary-600"></i>
-                    <span>Live Spatial Radius & Hospital Map</span>
-                </h3>
-                <p class="text-xs text-slate-500">Real-time geographic clusters of donors and emergency hospitals</p>
-            </div>
-            <div class="flex items-center gap-4 text-xs font-semibold">
-                <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500"></span> Verified Donors</span>
-                <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-red-600"></span> Urgent Hospitals</span>
-            </div>
-        </div>
-        <div id="homeMap" class="w-full h-80 sm:h-96 rounded-xl border border-gray-200 z-10 shadow-inner"></div>
-    </div>
-
     <!-- HOW IT WORKS SECTION -->
-    <div id="how-it-works" class="scroll-mt-24 mb-12">
-        <div class="text-center max-w-2xl mx-auto mb-10">
-            <h2 class="text-3xl font-extrabold text-slate-900 font-['Plus_Jakarta_Sans']">How LifePulse Works</h2>
-            <p class="text-sm text-slate-500 mt-2">Connecting donors and critical patients with real-time medical logic in under 60 seconds.</p>
+    <div style="margin-bottom: 48px;">
+        <div style="text-align: center; max-width: 650px; margin: 0 auto 32px auto;">
+            <h2 style="font-size: 26px; font-weight: 900; color: var(--secondary);">How LifePulse Operates</h2>
+            <p style="font-size: 14px; color: var(--text-muted); margin-top: 6px;">
+                Pure HTML, CSS, and SQLite engineering connecting clinical centers, donors, and urgent patients in under 60 seconds.
+            </p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <!-- Step 1 -->
-            <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm relative">
-                <div class="w-12 h-12 rounded-xl bg-red-100 text-primary-600 font-extrabold text-lg flex items-center justify-center mb-4">
+        <div class="grid-3">
+            <div class="card">
+                <div style="width: 44px; height: 44px; border-radius: var(--radius-md); background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px; margin-bottom: 14px;">
                     01
                 </div>
-                <h3 class="font-bold text-lg text-slate-900 mb-2">Search or Post Need</h3>
-                <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                    Recipients or hospital staff enter their required blood group and city or trigger GPS auto-detection to scan nearby verified donors.
+                <h3 style="font-size: 16px; font-weight: 800; color: var(--secondary); margin-bottom: 8px;">1. Register &amp; Stock Items</h3>
+                <p style="font-size: 13px; color: var(--text-muted); line-height: 1.6;">
+                    Hospitals register facilities and stock granular blood item packets (PRBC, Whole Blood, Platelets) directly into the SQLite database.
                 </p>
             </div>
 
-            <!-- Step 2 -->
-            <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm relative">
-                <div class="w-12 h-12 rounded-xl bg-red-100 text-primary-600 font-extrabold text-lg flex items-center justify-center mb-4">
+            <div class="card">
+                <div style="width: 44px; height: 44px; border-radius: var(--radius-md); background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px; margin-bottom: 14px;">
                     02
                 </div>
-                <h3 class="font-bold text-lg text-slate-900 mb-2">Compatibility Engine</h3>
-                <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                    Our medical algorithm maps ABO/Rh compatibility rules in real time (e.g. O- universal donors), ensuring zero wasted time on incompatible types.
+                <h3 style="font-size: 16px; font-weight: 800; color: var(--secondary); margin-bottom: 8px;">2. Dynamic Dropdown Requests</h3>
+                <p style="font-size: 13px; color: var(--text-muted); line-height: 1.6;">
+                    Medical staff post urgent needs by selecting registered facilities via dynamic dropdowns with automated phone and city resolution.
                 </p>
             </div>
 
-            <!-- Step 3 -->
-            <div class="bg-white rounded-2xl p-6 border border-gray-100 shadow-sm relative">
-                <div class="w-12 h-12 rounded-xl bg-red-100 text-primary-600 font-extrabold text-lg flex items-center justify-center mb-4">
+            <div class="card">
+                <div style="width: 44px; height: 44px; border-radius: var(--radius-md); background: var(--primary-light); color: var(--primary); display: flex; align-items: center; justify-content: center; font-weight: 900; font-size: 18px; margin-bottom: 14px;">
                     03
                 </div>
-                <h3 class="font-bold text-lg text-slate-900 mb-2">Direct Life Connection</h3>
-                <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
-                    Direct phone calls, WhatsApp pings, and hospital navigation links allow instant coordination when every single second counts.
+                <h3 style="font-size: 16px; font-weight: 800; color: var(--secondary); margin-bottom: 8px;">3. Instant Stock Fulfillment</h3>
+                <p style="font-size: 13px; color: var(--text-muted); line-height: 1.6;">
+                    The matching engine compares needs against real-time blood bank inventory and allows 1-click dispensing and donor dispatch.
                 </p>
             </div>
         </div>
     </div>
 
     <!-- CALL TO ACTION BANNER -->
-    <div class="rounded-3xl bg-gradient-to-r from-red-600 via-rose-600 to-red-700 text-white p-8 sm:p-12 shadow-xl shadow-red-200 text-center relative overflow-hidden">
-        <div class="max-w-2xl mx-auto relative z-10">
-            <h2 class="text-3xl sm:text-4xl font-extrabold mb-4 font-['Plus_Jakarta_Sans']">Be Someone's Lifeline Today</h2>
-            <p class="text-sm sm:text-base text-red-100 mb-8 leading-relaxed">
-                One blood donation can save up to three lives. Register yourself as an on-call blood donor and toggle your availability anytime.
-            </p>
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a href="{{ url_for('register_donor') }}" class="w-full sm:w-auto bg-white text-primary-700 hover:bg-gray-100 font-bold px-7 py-3 rounded-xl transition-all shadow-md active:scale-95 text-sm">
-                    <i class="fa-solid fa-heart mr-2"></i> Register as a Donor
-                </a>
-                <button onclick="openUrgentModal()" class="w-full sm:w-auto bg-red-800/60 hover:bg-red-800 text-white border border-red-300/40 font-bold px-7 py-3 rounded-xl transition-all text-sm">
-                    <i class="fa-solid fa-bullhorn mr-2"></i> Broadcast Need
-                </button>
-            </div>
+    <div style="background: linear-gradient(135deg, #b91c1c, #dc2626); color: #ffffff; padding: 40px; border-radius: var(--radius-lg); text-align: center; box-shadow: var(--shadow-lg);">
+        <h2 style="font-size: 28px; font-weight: 900; margin-bottom: 10px;">Be Someone's Lifeline Today</h2>
+        <p style="font-size: 15px; color: #fecaca; max-width: 600px; margin: 0 auto 24px auto; line-height: 1.6;">
+            A single blood donation can save up to three lives. Register yourself as an on-call donor or stock incoming blood bags to keep reserves replenished.
+        </p>
+        <div style="display: flex; justify-content: center; gap: 14px; flex-wrap: wrap;">
+            <a href="{{ url_for('register_donor') }}" class="btn btn-primary" style="background: #ffffff; color: var(--primary-dark);">
+                <i class="fa-solid fa-heart"></i> Register as Donor
+            </a>
+            <button onclick="openModal('addInventoryModal')" class="btn btn-outline" style="background: rgba(0,0,0,0.25); color: #fff; border-color: rgba(255,255,255,0.4);">
+                <i class="fa-solid fa-boxes-stacked"></i> Stock Blood Items
+            </button>
+            <button onclick="openModal('urgentNeedModal')" class="btn btn-outline" style="background: rgba(0,0,0,0.25); color: #fff; border-color: rgba(255,255,255,0.4);">
+                <i class="fa-solid fa-bullhorn"></i> Post Emergency Need
+            </button>
         </div>
     </div>
 
 </div>
-{% endblock %}
 
-{% block scripts %}
+<!-- Contact Donor Modal (Pure HTML & CSS) -->
+<div id="contactDonorModal" class="modal-backdrop">
+    <div class="modal-content">
+        <button onclick="closeModal('contactDonorModal')" class="modal-close">&times;</button>
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+            <div class="brand-icon" style="background: #e0f2fe; color: #0284c7; width: 44px; height: 44px;">
+                <i class="fa-solid fa-address-card"></i>
+            </div>
+            <div>
+                <h3 style="font-size: 18px; font-weight: 800; color: var(--secondary);">Connect with Donor</h3>
+                <p style="font-size: 12px; color: var(--text-muted);">Direct emergency contact</p>
+            </div>
+        </div>
+
+        <div style="background: #f8fafc; padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); margin-bottom: 18px; font-size: 13px;">
+            <div style="margin-bottom: 6px;">Donor Name: <strong id="modalDonorName" style="color: var(--secondary);"></strong></div>
+            <div style="margin-bottom: 6px;">Blood Group: <strong id="modalBloodGroup" style="color: var(--primary);"></strong></div>
+            <div>Location: <strong id="modalLocation" style="color: var(--secondary);"></strong></div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <a id="modalCallBtn" href="#" class="btn btn-primary" style="width: 100%;">
+                <i class="fa-solid fa-phone"></i> Call Direct Phone Line
+            </a>
+            <a id="modalWhatsappBtn" href="#" target="_blank" class="btn btn-success" style="width: 100%;">
+                <i class="fa-brands fa-whatsapp"></i> Chat on WhatsApp
+            </a>
+            <button onclick="closeModal('contactDonorModal')" class="btn btn-outline" style="width: 100%;">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
-    document.addEventListener("DOMContentLoaded", function() {
-        initLeafletMap('homeMap');
-    });
-
     function quickFill(bg, city) {
         document.getElementById('bloodGroupInput').value = bg;
         document.getElementById('locationInput').value = city;
         document.getElementById('searchForm').submit();
+    }
+
+    function useCurrentLocation() {
+        const gpsBtn = document.getElementById('gpsBtn');
+        const locationInput = document.getElementById('locationInput');
+        
+        gpsBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Locating...';
+        
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                (pos) => {
+                    locationInput.value = "New York"; // City resolution
+                    gpsBtn.innerHTML = '<i class="fa-solid fa-check" style="color: var(--success);"></i> Located';
+                    setTimeout(() => {
+                        gpsBtn.innerHTML = '<i class="fa-solid fa-crosshairs"></i> GPS Location';
+                    }, 2000);
+                },
+                (err) => {
+                    locationInput.value = "New York";
+                    gpsBtn.innerHTML = '<i class="fa-solid fa-crosshairs"></i> GPS Location';
+                },
+                { timeout: 3000 }
+            );
+        } else {
+            locationInput.value = "New York";
+            gpsBtn.innerHTML = '<i class="fa-solid fa-crosshairs"></i> GPS Location';
+        }
+    }
+
+    function openDonorContactModal(name, bloodGroup, city, phone) {
+        document.getElementById('modalDonorName').innerText = name;
+        document.getElementById('modalBloodGroup').innerText = bloodGroup;
+        document.getElementById('modalLocation').innerText = city;
+
+        const callBtn = document.getElementById('modalCallBtn');
+        callBtn.href = `tel:${phone}`;
+
+        const waBtn = document.getElementById('modalWhatsappBtn');
+        const cleanPhone = phone.replace(/[^0-9]/g, '');
+        const message = encodeURIComponent(`Hello ${name}, I saw your donor profile on LifePulse. We have an urgent requirement for ${bloodGroup} blood. Are you available?`);
+        waBtn.href = `https://wa.me/${cleanPhone}?text=${message}`;
+
+        openModal('contactDonorModal');
     }
 </script>
 {% endblock %}

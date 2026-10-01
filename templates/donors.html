@@ -3,34 +3,37 @@
 {% block title %}Find Blood Donors - LifePulse Directory{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+<div class="container" style="padding-top: 30px; padding-bottom: 50px;">
 
-    <!-- Header & Breadcrumbs -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+    <!-- Header Section -->
+    <div class="page-header">
         <div>
-            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight font-['Plus_Jakarta_Sans']">
-                Blood Donor Directory
-            </h1>
-            <p class="text-sm text-slate-500 mt-1">
-                Browse verified blood donors ready to respond in your area.
+            <div class="badge badge-success" style="margin-bottom: 8px;">
+                <i class="fa-solid fa-users"></i> Verified Community Network
+            </div>
+            <h1 class="page-title">Blood Donor Directory</h1>
+            <p class="page-subtitle">
+                Browse verified blood donors ready to respond in your area. Contact donors directly for emergency matching.
             </p>
         </div>
-        <div class="flex items-center gap-3">
-            <a href="{{ url_for('register_donor') }}" class="bg-primary-600 hover:bg-primary-700 text-white font-bold text-sm px-4 py-2.5 rounded-xl shadow-xs inline-flex items-center gap-2 transition-all">
-                <i class="fa-solid fa-user-plus"></i>
-                <span>Register as Donor</span>
+        <div class="flex gap-2">
+            <a href="{{ url_for('register_donor') }}" class="btn btn-primary">
+                <i class="fa-solid fa-user-plus"></i> Register as Donor
             </a>
+            <button onclick="openModal('urgentNeedModal')" class="btn btn-outline-primary">
+                <i class="fa-solid fa-truck-medical"></i> Post Urgent Need
+            </button>
         </div>
     </div>
 
-    <!-- Filter Card -->
-    <div class="bg-white rounded-2xl p-5 border border-gray-200 shadow-sm mb-8">
-        <form action="{{ url_for('donors_page') }}" method="GET" class="space-y-4">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
+    <!-- Filter Bar -->
+    <div class="filter-bar">
+        <form action="{{ url_for('donors_page') }}" method="GET">
+            <div class="flex items-center gap-3" style="flex-wrap: wrap; margin-bottom: 12px;">
                 <!-- Blood Group Filter -->
-                <div class="lg:col-span-3">
-                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Blood Group</label>
-                    <select name="blood_group" class="w-full h-11 px-3.5 rounded-xl border border-gray-300 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-red-500">
+                <div style="flex: 1; min-width: 160px;">
+                    <label class="form-label">Blood Group</label>
+                    <select name="blood_group" class="form-select">
                         <option value="">All Blood Groups</option>
                         {% for bg in blood_groups %}
                             <option value="{{ bg }}" {% if selected_group == bg %}selected{% endif %}>{{ bg }}</option>
@@ -39,173 +42,165 @@
                 </div>
 
                 <!-- City Filter -->
-                <div class="lg:col-span-4">
-                    <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Location / City</label>
-                    <input type="text" name="location" value="{{ search_location or '' }}" placeholder="e.g. New York, Chennai, San Francisco..." 
-                           class="w-full h-11 px-3.5 rounded-xl border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500">
+                <div style="flex: 2; min-width: 220px;">
+                    <label class="form-label">Location / City</label>
+                    <input type="text" name="location" value="{{ search_location or '' }}" 
+                           placeholder="e.g. New York, Chennai, San Francisco..." 
+                           class="form-control">
                 </div>
 
                 <!-- Checkbox Availability -->
-                <div class="lg:col-span-3 flex items-center h-11">
-                    <label class="inline-flex items-center gap-2 cursor-pointer select-none text-xs font-semibold text-slate-700">
-                        <input type="checkbox" name="available_only" value="1" {% if available_only %}checked{% endif %} class="w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500">
-                        <span>Show Available Donors Only</span>
+                <div style="display: flex; align-items: center; gap: 8px; margin-top: 22px;">
+                    <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; cursor: pointer;">
+                        <input type="checkbox" name="available_only" value="1" {% if available_only %}checked{% endif %}>
+                        <span>Available Only</span>
                     </label>
                 </div>
 
-                <!-- Actions -->
-                <div class="lg:col-span-2 flex items-center gap-2">
-                    <button type="submit" class="w-full h-11 bg-primary-600 hover:bg-primary-700 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-1.5 transition-colors">
-                        <i class="fa-solid fa-filter"></i>
-                        <span>Filter</span>
+                <!-- Submit / Reset -->
+                <div style="display: flex; gap: 8px; margin-top: 22px;">
+                    <button type="submit" class="btn btn-secondary">
+                        <i class="fa-solid fa-filter"></i> Filter
                     </button>
-                    <a href="{{ url_for('donors_page') }}" class="h-11 px-3.5 rounded-xl border border-gray-300 hover:bg-gray-50 text-slate-600 flex items-center justify-center text-sm" title="Reset">
+                    <a href="{{ url_for('donors_page') }}" class="btn btn-outline" title="Reset Filters">
                         <i class="fa-solid fa-rotate-left"></i>
                     </a>
                 </div>
             </div>
 
-            <div class="pt-2 border-t border-gray-100 flex items-center justify-between text-xs text-slate-500">
-                <label class="inline-flex items-center gap-2 cursor-pointer select-none">
-                    <input type="checkbox" name="compatible" value="true" {% if compatible_mode %}checked{% endif %} class="w-4 h-4 text-red-600 rounded border-gray-300 focus:ring-red-500">
-                    <span class="font-medium text-slate-700">Include medically compatible donor types</span>
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--border-subtle); padding-top: 10px;">
+                <label style="display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                    <input type="checkbox" name="compatible" value="true" {% if compatible_mode %}checked{% endif %}>
+                    <span>Include medically compatible donor types (e.g. universal donors)</span>
                 </label>
-                <div>
-                    <span>Found <strong>{{ donors|length }}</strong> verified donor(s)</span>
-                </div>
+                <span>Found <strong>{{ donors|length }}</strong> verified donor(s)</span>
             </div>
         </form>
     </div>
 
-    <!-- Toggle View: Grid or Map -->
-    <div class="flex items-center justify-between mb-6">
-        <div class="text-sm font-semibold text-slate-700">
-            Donor Listings
-        </div>
-        <div class="flex items-center bg-gray-200/80 p-1 rounded-xl text-xs font-semibold text-slate-700">
-            <button onclick="switchView('grid')" id="viewGridBtn" class="px-3 py-1.5 rounded-lg bg-white shadow-xs text-slate-900 transition-all flex items-center gap-1.5">
-                <i class="fa-solid fa-grip"></i> Grid
-            </button>
-            <button onclick="switchView('map')" id="viewMapBtn" class="px-3 py-1.5 rounded-lg text-slate-600 hover:text-slate-900 transition-all flex items-center gap-1.5">
-                <i class="fa-solid fa-map"></i> Map
-            </button>
-        </div>
-    </div>
-
-    <!-- Donors Grid View -->
-    <div id="donorsGridView" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <!-- Donors Cards Grid -->
+    <div class="grid-3" style="margin-bottom: 40px;">
         {% for donor in donors %}
-        <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+        <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
             <div>
-                <div class="flex items-start justify-between mb-4">
+                <!-- Donor Header -->
+                <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-3">
-                        <div class="w-13 h-13 rounded-2xl bg-gradient-to-tr from-rose-50 to-red-100 text-primary-700 font-extrabold text-xl flex items-center justify-center border border-red-200 shadow-2xs">
-                            {{ donor.name[0] }}
+                        <div class="blood-avatar" style="width: 44px; height: 44px; font-size: 15px;">
+                            {{ donor.blood_group }}
                         </div>
                         <div>
-                            <h3 class="font-bold text-slate-900 text-lg flex items-center gap-1.5">
+                            <h3 style="font-size: 16px; font-weight: 800; color: var(--secondary);">
                                 {{ donor.name }}
                                 {% if donor.is_verified %}
-                                    <i class="fa-solid fa-circle-check text-blue-500 text-xs" title="Identity & Blood Verified"></i>
+                                <i class="fa-solid fa-circle-check" style="color: #0284c7; font-size: 12px;" title="Verified Donor"></i>
                                 {% endif %}
                             </h3>
-                            <div class="text-xs text-slate-500 flex items-center gap-1 mt-0.5">
-                                <i class="fa-solid fa-location-dot text-slate-400"></i>
+                            <div style="font-size: 12px; color: var(--text-muted); display: flex; align-items: center; gap: 4px;">
+                                <i class="fa-solid fa-location-dot" style="font-size: 11px; color: var(--primary);"></i>
                                 <span>{{ donor.city }}, {{ donor.state or 'Online' }}</span>
                             </div>
                         </div>
                     </div>
-
-                    <!-- Blood Group Badge -->
-                    <div class="w-12 h-12 rounded-full bg-primary-600 text-white font-extrabold flex items-center justify-center text-base shadow-md shadow-red-200">
-                        {{ donor.blood_group }}
+                    <div>
+                        {% if donor.is_available %}
+                        <span class="badge badge-success">Available</span>
+                        {% else %}
+                        <span class="badge" style="background: #f1f5f9; color: #64748b;">Offline</span>
+                        {% endif %}
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-2 text-xs bg-gray-50 rounded-xl p-3 mb-4 text-slate-600 border border-gray-100">
+                <!-- Donor Stats Strip -->
+                <div style="background: #f8fafc; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 14px; font-size: 12px; display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
                     <div>
-                        <span class="text-slate-400 block text-[11px]">Age & Gender</span>
-                        <span class="font-bold text-slate-800">{{ donor.age or '25' }} yrs &bull; {{ donor.gender or 'N/A' }}</span>
+                        <span style="color: var(--text-muted); display: block; font-size: 11px;">Age & Gender</span>
+                        <strong style="color: var(--secondary);">{{ donor.age or '25' }} yrs &bull; {{ donor.gender or 'N/A' }}</strong>
                     </div>
                     <div>
-                        <span class="text-slate-400 block text-[11px]">Donation Record</span>
-                        <span class="font-bold text-slate-800">{{ donor.donations_count }} donations</span>
-                    </div>
-                    <div class="col-span-2 pt-1 border-t border-gray-200/50 flex justify-between items-center">
-                        <span class="text-slate-400 text-[11px]">Availability</span>
-                        <span class="font-semibold text-xs {% if donor.is_available %}text-emerald-600{% else %}text-slate-400{% endif %}">
-                            {% if donor.is_available %}● Available for Request{% else %}○ Temporarily Offline{% endif %}
-                        </span>
+                        <span style="color: var(--text-muted); display: block; font-size: 11px;">Total Donations</span>
+                        <strong style="color: var(--secondary);">{{ donor.donations_count }} donation(s)</strong>
                     </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-2 gap-2 pt-3 border-t border-gray-100">
-                <a href="tel:{{ donor.phone }}" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-colors">
-                    <i class="fa-solid fa-phone text-slate-600"></i> Call
+            <!-- Footer Action Buttons -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding-top: 12px; border-top: 1px solid var(--border-subtle);">
+                <a href="tel:{{ donor.phone }}" class="btn btn-sm btn-outline">
+                    <i class="fa-solid fa-phone"></i> Call
                 </a>
-                <button onclick="openContactModal('{{ donor.name }}', '{{ donor.blood_group }}', '{{ donor.city }}', '{{ donor.phone }}')"
-                        class="w-full bg-primary-600 hover:bg-primary-700 text-white text-xs font-bold py-2.5 rounded-xl flex items-center justify-center gap-1.5 transition-colors shadow-2xs">
+                <button onclick="openDonorContactModal('{{ donor.name }}', '{{ donor.blood_group }}', '{{ donor.city }}', '{{ donor.phone }}')" class="btn btn-sm btn-primary">
                     <i class="fa-solid fa-paper-plane"></i> Connect
                 </button>
             </div>
         </div>
         {% else %}
-        <div class="col-span-3 bg-white rounded-2xl p-12 text-center border border-dashed border-gray-300">
-            <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
+        <div style="grid-column: 1 / -1; background: #ffffff; padding: 48px; text-align: center; border-radius: var(--radius-lg); border: 1px dashed var(--border-color);">
+            <div style="width: 56px; height: 56px; background: #fee2e2; color: #dc2626; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 24px;">
                 <i class="fa-solid fa-magnifying-glass"></i>
             </div>
-            <h3 class="text-xl font-bold text-slate-900 mb-1">No Donors Found</h3>
-            <p class="text-sm text-slate-500 max-w-md mx-auto mb-6">
-                Try broadening your filter criteria or unchecking "Show Available Donors Only".
+            <h3 style="font-size: 20px; font-weight: 800; color: var(--secondary); margin-bottom: 6px;">No Donors Found</h3>
+            <p style="font-size: 13px; color: var(--text-muted); max-width: 450px; margin: 0 auto 20px;">
+                No registered donors match your current filter. Try selecting "All Blood Groups" or broadening your city search.
             </p>
-            <a href="{{ url_for('donors_page') }}" class="bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold px-4 py-2.5 rounded-xl">
+            <a href="{{ url_for('donors_page') }}" class="btn btn-outline">
                 Reset All Filters
             </a>
         </div>
         {% endfor %}
     </div>
 
-    <!-- Map View Container (Hidden initially) -->
-    <div id="donorsMapView" class="hidden bg-white rounded-2xl p-4 border border-gray-200 shadow-sm">
-        <div id="fullDonorsMap" class="w-full h-[600px] rounded-xl z-10 shadow-inner"></div>
-    </div>
-
 </div>
-{% endblock %}
 
-{% block scripts %}
+<!-- Contact Donor Modal (Pure HTML & CSS) -->
+<div id="contactDonorModal" class="modal-backdrop">
+    <div class="modal-content">
+        <button onclick="closeModal('contactDonorModal')" class="modal-close">&times;</button>
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+            <div class="brand-icon" style="background: #e0f2fe; color: #0284c7; width: 44px; height: 44px;">
+                <i class="fa-solid fa-address-card"></i>
+            </div>
+            <div>
+                <h3 style="font-size: 18px; font-weight: 800; color: var(--secondary);">Connect with Donor</h3>
+                <p style="font-size: 12px; color: var(--text-muted);">Direct emergency contact</p>
+            </div>
+        </div>
+
+        <div style="background: #f8fafc; padding: 14px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); margin-bottom: 18px; font-size: 13px;">
+            <div style="margin-bottom: 6px;">Donor Name: <strong id="modalDonorName" style="color: var(--secondary);"></strong></div>
+            <div style="margin-bottom: 6px;">Blood Group: <strong id="modalBloodGroup" style="color: var(--primary);"></strong></div>
+            <div>Location: <strong id="modalLocation" style="color: var(--secondary);"></strong></div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            <a id="modalCallBtn" href="#" class="btn btn-primary" style="width: 100%;">
+                <i class="fa-solid fa-phone"></i> Call Direct Phone Line
+            </a>
+            <a id="modalWhatsappBtn" href="#" target="_blank" class="btn btn-success" style="width: 100%;">
+                <i class="fa-brands fa-whatsapp"></i> Chat on WhatsApp
+            </a>
+            <button onclick="closeModal('contactDonorModal')" class="btn btn-outline" style="width: 100%;">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
-    let mapInitialized = false;
+    function openDonorContactModal(name, bloodGroup, city, phone) {
+        document.getElementById('modalDonorName').innerText = name;
+        document.getElementById('modalBloodGroup').innerText = bloodGroup;
+        document.getElementById('modalLocation').innerText = city;
 
-    function switchView(view) {
-        const gridView = document.getElementById('donorsGridView');
-        const mapView = document.getElementById('donorsMapView');
-        const gridBtn = document.getElementById('viewGridBtn');
-        const mapBtn = document.getElementById('viewMapBtn');
+        const callBtn = document.getElementById('modalCallBtn');
+        callBtn.href = `tel:${phone}`;
 
-        if (view === 'map') {
-            gridView.classList.add('hidden');
-            mapView.classList.remove('hidden');
-            gridBtn.classList.remove('bg-white', 'shadow-xs', 'text-slate-900');
-            gridBtn.classList.add('text-slate-600');
-            mapBtn.classList.add('bg-white', 'shadow-xs', 'text-slate-900');
-            mapBtn.classList.remove('text-slate-600');
+        const waBtn = document.getElementById('modalWhatsappBtn');
+        const cleanPhone = phone.replace(/[^0-9]/g, '');
+        const message = encodeURIComponent(`Hello ${name}, I saw your donor profile on LifePulse. We have an urgent requirement for ${bloodGroup} blood. Are you available?`);
+        waBtn.href = `https://wa.me/${cleanPhone}?text=${message}`;
 
-            if (!mapInitialized) {
-                setTimeout(() => {
-                    initLeafletMap('fullDonorsMap');
-                    mapInitialized = true;
-                }, 100);
-            }
-        } else {
-            gridView.classList.remove('hidden');
-            mapView.classList.add('hidden');
-            mapBtn.classList.remove('bg-white', 'shadow-xs', 'text-slate-900');
-            mapBtn.classList.add('text-slate-600');
-            gridBtn.classList.add('bg-white', 'shadow-xs', 'text-slate-900');
-            gridBtn.classList.remove('text-slate-600');
-        }
+        openModal('contactDonorModal');
     }
 </script>
 {% endblock %}

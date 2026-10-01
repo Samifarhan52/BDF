@@ -3,37 +3,34 @@
 {% block title %}Emergency Urgent Blood Needs - LifePulse Broadcast{% endblock %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+<div class="container" style="padding-top: 30px; padding-bottom: 50px;">
 
-    <!-- Header Section -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+    <!-- Page Header & Action Bar -->
+    <div class="page-header">
         <div>
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-bold uppercase mb-2">
-                <span class="w-2 h-2 rounded-full bg-red-600 animate-ping"></span>
-                <span>Live Hospital Broadcast</span>
+            <div class="badge badge-critical" style="margin-bottom: 8px;">
+                <i class="fa-solid fa-truck-medical"></i> Live Hospital Emergency Broadcast
             </div>
-            <h1 class="text-3xl font-extrabold text-slate-900 tracking-tight font-['Plus_Jakarta_Sans']">
-                Active Urgent Blood Needs
-            </h1>
-            <p class="text-sm text-slate-500 mt-1">
-                Verified hospital emergency cases requiring immediate blood units. Donors in matching areas are prioritized.
+            <h1 class="page-title">Active Urgent Blood Needs</h1>
+            <p class="page-subtitle">
+                Verified hospital emergency cases requiring immediate blood units. Post needs using the blood bank dropdown selection method.
             </p>
         </div>
-        <div>
-            <button onclick="openUrgentModal()" class="bg-primary-600 hover:bg-primary-700 text-white font-bold text-sm px-5 py-3 rounded-xl shadow-md shadow-red-200 inline-flex items-center gap-2 transition-all active:scale-95">
-                <i class="fa-solid fa-plus"></i>
-                <span>Submit Emergency Need</span>
+        <div class="flex gap-2" style="flex-wrap: wrap;">
+            <button onclick="openModal('urgentNeedModal')" class="btn btn-primary">
+                <i class="fa-solid fa-circle-plus"></i> + Post Urgent Blood Need
             </button>
+            <a href="{{ url_for('availability_and_needs') }}" class="btn btn-outline" style="color: #059669; border-color: #059669;">
+                <i class="fa-solid fa-chart-pie"></i> Match with Inventory
+            </a>
         </div>
     </div>
 
-    <!-- Filters Strip -->
-    <div class="bg-white rounded-2xl p-4 border border-gray-200 shadow-sm mb-8">
-        <form action="{{ url_for('urgent_needs_page') }}" method="GET" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-3 items-end">
-            <!-- Urgency Level -->
-            <div class="lg:col-span-3">
-                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Urgency Priority</label>
-                <select name="urgency" class="w-full h-11 px-3.5 rounded-xl border border-gray-300 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-red-500">
+    <!-- Filter Strip -->
+    <div class="filter-bar">
+        <form action="{{ url_for('urgent_needs_page') }}" method="GET" class="flex items-center gap-3" style="flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 180px;">
+                <select name="urgency" class="form-select">
                     <option value="">All Urgency Levels</option>
                     <option value="CRITICAL NEED" {% if selected_urgency == 'CRITICAL NEED' %}selected{% endif %}>🚨 CRITICAL NEED (Immediate)</option>
                     <option value="HIGH NEED" {% if selected_urgency == 'HIGH NEED' %}selected{% endif %}>⚠️ HIGH NEED (Within 6h)</option>
@@ -41,168 +38,255 @@
                 </select>
             </div>
 
-            <!-- Blood Group -->
-            <div class="lg:col-span-3">
-                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">Blood Group</label>
-                <select name="blood_group" class="w-full h-11 px-3.5 rounded-xl border border-gray-300 text-sm font-semibold bg-white focus:outline-none focus:ring-2 focus:ring-red-500">
-                    <option value="">All Groups</option>
+            <div style="flex: 1; min-width: 160px;">
+                <select name="blood_group" class="form-select">
+                    <option value="">All Blood Groups</option>
                     {% for bg in blood_groups %}
                         <option value="{{ bg }}" {% if selected_group == bg %}selected{% endif %}>{{ bg }}</option>
                     {% endfor %}
                 </select>
             </div>
 
-            <!-- City -->
-            <div class="lg:col-span-4">
-                <label class="block text-xs font-bold text-slate-700 uppercase mb-1">City or Hospital</label>
-                <input type="text" name="city" value="{{ selected_city or '' }}" placeholder="e.g. New York, Chennai, San Francisco..." 
-                       class="w-full h-11 px-3.5 rounded-xl border border-gray-300 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-red-500">
+            <div style="flex: 2; min-width: 220px; position: relative;">
+                <input type="text" name="city" value="{{ selected_city or '' }}" 
+                       placeholder="Filter by city or hospital..." 
+                       class="form-control" style="padding-left: 36px;">
+                <i class="fa-solid fa-magnifying-glass" style="position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: var(--text-light); font-size: 13px;"></i>
             </div>
 
-            <!-- Action -->
-            <div class="lg:col-span-2 flex items-center gap-2">
-                <button type="submit" class="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm rounded-xl flex items-center justify-center gap-1.5 transition-colors">
-                    <i class="fa-solid fa-filter"></i>
-                    <span>Apply</span>
-                </button>
-                <a href="{{ url_for('urgent_needs_page') }}" class="h-11 px-3.5 rounded-xl border border-gray-300 hover:bg-gray-50 text-slate-600 flex items-center justify-center text-sm" title="Clear">
-                    <i class="fa-solid fa-rotate-left"></i>
-                </a>
-            </div>
+            <button type="submit" class="btn btn-secondary">
+                <i class="fa-solid fa-filter"></i> Apply Filter
+            </button>
+            {% if selected_urgency or selected_group or selected_city %}
+            <a href="{{ url_for('urgent_needs_page') }}" class="btn btn-outline">
+                <i class="fa-solid fa-rotate-left"></i> Reset
+            </a>
+            {% endif %}
         </form>
     </div>
 
-    <!-- Active Cards Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+    <!-- Active Requests Grid -->
+    <div class="grid-3" style="margin-bottom: 40px;">
         {% for req in requests %}
-        <div class="bg-white rounded-2xl p-6 border border-gray-200 shadow-md hover:shadow-xl transition-all relative flex flex-col justify-between group">
+        <div class="card" style="display: flex; flex-direction: column; justify-content: space-between;">
             <div>
-                <!-- Top Badge & Blood Group Circle (Screenshot 2 Match) -->
-                <div class="flex items-start justify-between mb-4">
+                <!-- Top Header: Urgency Badge & Blood Group Avatar -->
+                <div class="flex items-center justify-between mb-3">
                     <div>
                         {% if req.urgency_level == 'CRITICAL NEED' %}
-                            <span class="px-3.5 py-1 rounded-full text-xs font-extrabold tracking-wide uppercase bg-red-100 text-red-700 border border-red-200 shadow-2xs">
-                                CRITICAL NEED
-                            </span>
+                            <span class="badge badge-critical">CRITICAL NEED</span>
                         {% elif req.urgency_level == 'HIGH NEED' %}
-                            <span class="px-3.5 py-1 rounded-full text-xs font-extrabold tracking-wide uppercase bg-amber-100 text-amber-800 border border-amber-200">
-                                HIGH NEED
-                            </span>
+                            <span class="badge badge-high">HIGH NEED</span>
                         {% else %}
-                            <span class="px-3.5 py-1 rounded-full text-xs font-extrabold tracking-wide uppercase bg-orange-100 text-orange-800 border border-orange-200">
-                                MEDIUM NEED
-                            </span>
+                            <span class="badge badge-medium">MEDIUM NEED</span>
                         {% endif %}
                     </div>
-
-                    <!-- Red Circular Blood Group Badge -->
-                    <div class="w-13 h-13 rounded-full bg-primary-600 text-white font-extrabold flex items-center justify-center text-lg shadow-md shadow-red-300 ring-4 ring-red-50">
+                    <div class="blood-avatar" style="width: 44px; height: 44px; font-size: 15px;">
                         {{ req.blood_group }}
                     </div>
                 </div>
 
-                <!-- Patient Name -->
-                <h3 class="text-xl font-bold text-slate-900 mb-4">
+                <!-- Patient & Hospital Details -->
+                <h3 style="font-size: 18px; font-weight: 800; color: var(--secondary); margin-bottom: 12px;">
                     Patient: {{ req.patient_name }}
                 </h3>
 
-                <!-- Hospital & Medical Details -->
-                <div class="space-y-2.5 text-sm text-slate-600 mb-6">
-                    <div class="flex items-center gap-2.5">
-                        <i class="fa-solid fa-hospital text-primary-600 w-4 text-center"></i>
-                        <span class="font-medium text-slate-800">{{ req.hospital_name }}</span>
+                <div style="font-size: 13px; color: var(--text-muted); display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px;">
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-hospital" style="color: var(--primary); width: 16px; text-align: center;"></i>
+                        <span style="font-weight: 600; color: var(--text-main);">{{ req.hospital_name }}</span>
                     </div>
-                    <div class="flex items-center gap-2.5">
-                        <i class="fa-solid fa-droplet text-primary-600 w-4 text-center"></i>
-                        <span>Needed Units: <strong class="text-slate-800">{{ req.units_needed }} Unit(s)</strong></span>
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-location-dot" style="color: var(--primary); width: 16px; text-align: center;"></i>
+                        <span>{{ req.city }}</span>
                     </div>
-                    <div class="flex items-center gap-2.5">
-                        <i class="fa-solid fa-phone text-primary-600 w-4 text-center"></i>
-                        <span>Hotline: <strong class="text-slate-800 font-mono">{{ req.hotline }}</strong></span>
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-droplet" style="color: var(--primary); width: 16px; text-align: center;"></i>
+                        <span>Needed: <strong style="color: var(--secondary);">{{ req.units_needed }} Unit(s)</strong> ({{ req.component_type or 'Whole Blood' }})</span>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <i class="fa-solid fa-phone" style="color: var(--primary); width: 16px; text-align: center;"></i>
+                        <span>Hotline: <strong style="color: var(--secondary); font-family: monospace;">{{ req.hotline }}</strong></span>
                     </div>
                     {% if req.notes %}
-                    <div class="flex items-start gap-2.5 text-slate-500 italic pt-1 text-xs">
-                        <i class="fa-solid fa-circle-info text-primary-600 w-4 text-center mt-0.5"></i>
-                        <span>&ldquo;{{ req.notes }}&rdquo;</span>
+                    <div style="font-style: italic; font-size: 12px; background: #f8fafc; padding: 6px 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); margin-top: 4px;">
+                        &ldquo;{{ req.notes }}&rdquo;
                     </div>
                     {% endif %}
                 </div>
 
-                <!-- Real-Time Fulfillment Tracker -->
-                <div class="mb-4 bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                    <div class="flex justify-between text-xs font-semibold mb-1">
-                        <span class="text-slate-600">Pledged: <strong id="pledge-count-{{ req.id }}">{{ req.units_fulfilled or 0 }}</strong> of {{ req.units_needed }} Unit(s)</span>
-                        <span class="text-primary-700 font-bold" id="pledge-pct-{{ req.id }}">
+                <!-- Real-Time Progress Tracker -->
+                <div style="background: #f8fafc; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); padding: 10px 12px; margin-bottom: 16px;">
+                    <div class="flex justify-between" style="font-size: 11px; font-weight: 700; margin-bottom: 4px;">
+                        <span>Pledged: <strong id="pledge-count-{{ req.id }}">{{ req.units_fulfilled or 0 }}</strong> of {{ req.units_needed }} Unit(s)</span>
+                        <span style="color: var(--primary);" id="pledge-pct-{{ req.id }}">
                             {{ [(((req.units_fulfilled or 0) / req.units_needed) * 100)|int, 100]|min }}%
                         </span>
                     </div>
-                    <div class="w-full h-2 rounded-full bg-gray-200 overflow-hidden">
-                        <div id="pledge-bar-{{ req.id }}" class="h-full bg-gradient-to-r from-red-600 to-rose-500 rounded-full transition-all duration-500" 
+                    <div class="progress-container" style="margin: 0; height: 7px;">
+                        <div id="pledge-bar-{{ req.id }}" class="progress-bar {% if (req.units_fulfilled or 0) >= req.units_needed %}fulfilled{% endif %}"
                              style="width: {{ [(((req.units_fulfilled or 0) / req.units_needed) * 100)|int, 100]|min }}%;"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Action Buttons -->
-            <div class="pt-3 border-t border-gray-100 space-y-2">
-                <button onclick="openVolunteerModal({{ req.id }}, '{{ req.patient_name }}', '{{ req.blood_group }}', '{{ req.hospital_name }}')"
-                        class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm py-2.5 rounded-xl flex items-center justify-center gap-2 transition-all shadow-xs active:scale-95">
-                    <i class="fa-solid fa-hand-holding-heart"></i>
-                    <span>Volunteer / I Can Donate</span>
+            <!-- Actions Footer -->
+            <div style="padding-top: 14px; border-top: 1px solid var(--border-subtle); display: flex; flex-direction: column; gap: 8px;">
+                <button onclick="openVolunteerPledgeModal({{ req.id }}, '{{ req.patient_name }}', '{{ req.blood_group }}', '{{ req.hospital_name }}')"
+                        class="btn btn-success" style="width: 100%;">
+                    <i class="fa-solid fa-hand-holding-heart"></i> Volunteer / I Can Donate
                 </button>
-                <div class="flex items-center gap-2">
-                    <a href="tel:{{ req.hotline }}" class="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs py-2 rounded-xl flex items-center justify-center gap-2 transition-colors">
-                        <i class="fa-solid fa-phone text-slate-600"></i>
-                        <span>Hotline: {{ req.hotline }}</span>
+                <div class="flex gap-2">
+                    <a href="tel:{{ req.hotline }}" class="btn btn-sm btn-outline" style="flex: 1;">
+                        <i class="fa-solid fa-phone"></i> Call Hotline
                     </a>
                     <a href="https://wa.me/?text=Emergency%20Blood%20Needed!%20Patient:%20{{ req.patient_name }}%20Group:%20{{ req.blood_group }}%20at%20{{ req.hospital_name }}%20Hotline:%20{{ req.hotline }}" 
-                       target="_blank" class="w-9 h-9 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-600 flex items-center justify-center transition-colors" title="Share on WhatsApp">
-                        <i class="fa-brands fa-whatsapp text-base"></i>
+                       target="_blank" class="btn btn-sm btn-outline" style="color: #16a34a; border-color: #bbf7d0;" title="Share on WhatsApp">
+                        <i class="fa-brands fa-whatsapp"></i> WhatsApp
                     </a>
-                    <button onclick="shareUrgentNeed('{{ req.patient_name }}', '{{ req.blood_group }}', '{{ req.hospital_name }}')" 
-                            class="w-9 h-9 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 flex items-center justify-center transition-colors" title="Copy Link">
-                        <i class="fa-solid fa-share-nodes text-xs"></i>
-                    </button>
                 </div>
             </div>
         </div>
         {% else %}
-        <div class="col-span-3 bg-white rounded-2xl p-12 text-center border border-dashed border-gray-300">
-            <div class="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3 text-2xl">
+        <div style="grid-column: 1 / -1; background: #ffffff; padding: 48px; text-align: center; border-radius: var(--radius-lg); border: 1px dashed var(--border-color);">
+            <div style="width: 56px; height: 56px; background: #dcfce7; color: #16a34a; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; font-size: 24px;">
                 <i class="fa-solid fa-shield-heart"></i>
             </div>
-            <h3 class="text-xl font-bold text-slate-900 mb-1">No Active Emergencies in Selected Filter</h3>
-            <p class="text-sm text-slate-500 max-w-md mx-auto mb-6">
-                All critical requests in this category are currently fulfilled or stabilized.
+            <h3 style="font-size: 20px; font-weight: 800; color: var(--secondary); margin-bottom: 6px;">No Active Emergency Shortages</h3>
+            <p style="font-size: 13px; color: var(--text-muted); max-width: 450px; margin: 0 auto 20px;">
+                All urgent requests in this filter criteria are currently stabilized or fulfilled.
             </p>
-            <button onclick="openUrgentModal()" class="bg-primary-600 hover:bg-primary-700 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-xs">
-                Broadcast New Emergency Need
+            <button onclick="openModal('urgentNeedModal')" class="btn btn-primary">
+                <i class="fa-solid fa-circle-plus"></i> Broadcast New Emergency Need
             </button>
         </div>
         {% endfor %}
     </div>
 
-    <!-- College Project Note on Urgency Protocol -->
-    <div class="bg-slate-50 rounded-2xl p-6 border border-slate-200">
-        <h4 class="text-sm font-bold text-slate-900 mb-2 flex items-center gap-2">
-            <i class="fa-solid fa-notes-medical text-primary-600"></i>
-            <span>Medical Triage Protocol for College Demonstration</span>
+    <!-- College Triage Protocol Card -->
+    <div class="card" style="background: #f8fafc;">
+        <h4 style="font-size: 14px; font-weight: 800; color: var(--secondary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px;">
+            <i class="fa-solid fa-notes-medical" style="color: var(--primary);"></i>
+            Clinical Emergency Prioritization System (College Evaluation Reference)
         </h4>
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs text-slate-600">
-            <div class="p-3 bg-white rounded-xl border border-gray-200">
-                <strong class="text-red-700 block mb-1">🚨 CRITICAL NEED</strong>
-                Immediate trauma surgery, cardiac arrest, catastrophic postpartum hemorrhage. Requires instant dispatch of matching or universal O- donor units.
+        <div class="grid-3" style="font-size: 12px;">
+            <div style="background: #ffffff; padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                <strong style="color: #991b1b; display: block; margin-bottom: 4px;">🚨 CRITICAL NEED (&lt; 2 Hours)</strong>
+                Active trauma surgery, arterial hemorrhage, critical obstetric complications. Triggers immediate multi-channel broadcast and universal O- donor dispatch.
             </div>
-            <div class="p-3 bg-white rounded-xl border border-gray-200">
-                <strong class="text-amber-700 block mb-1">⚠️ HIGH NEED</strong>
-                Scheduled emergency surgeries, oncology platelet depletion, ICU support required within 6 hours.
+            <div style="background: #ffffff; padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                <strong style="color: #9a3412; display: block; margin-bottom: 4px;">⚠️ HIGH NEED (&lt; 6 Hours)</strong>
+                Scheduled oncology platelet transfusions, elective surgery preparation, acute anemia stabilization in intensive care units.
             </div>
-            <div class="p-3 bg-white rounded-xl border border-gray-200">
-                <strong class="text-orange-700 block mb-1">⏱️ MEDIUM NEED</strong>
-                Thalassemia maintenance, routine dialysis transfusions, pre-operative unit reservation within 24 hours.
+            <div style="background: #ffffff; padding: 14px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                <strong style="color: #92400e; display: block; margin-bottom: 4px;">⏱️ MEDIUM NEED (&lt; 24 Hours)</strong>
+                Thalassemia major monthly transfusion cycles, routine hemodialysis replenishment, and clinical ward inventory restocking.
             </div>
         </div>
     </div>
 
 </div>
+
+<!-- Volunteer Pledge Modal (Pure HTML & CSS) -->
+<div id="volunteerPledgeModal" class="modal-backdrop">
+    <div class="modal-content">
+        <button onclick="closeModal('volunteerPledgeModal')" class="modal-close">&times;</button>
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+            <div class="brand-icon" style="background: #dcfce7; color: #16a34a; width: 44px; height: 44px;">
+                <i class="fa-solid fa-hand-holding-heart"></i>
+            </div>
+            <div>
+                <h3 style="font-size: 18px; font-weight: 800; color: var(--secondary);">Volunteer Blood Donation</h3>
+                <p id="volunteerModalSubtitle" style="font-size: 12px; color: var(--text-muted);">Pledge to donate blood units for this hospital patient</p>
+            </div>
+        </div>
+
+        <form id="volunteerPledgeForm" onsubmit="handleVolunteerSubmit(event)">
+            <input type="hidden" name="request_id" id="volPledgeRequestId">
+
+            <div class="form-group">
+                <label class="form-label">Your Name *</label>
+                <input type="text" name="donor_name" value="{{ current_user.name if current_user else '' }}" placeholder="e.g. David Miller" required class="form-control">
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label">Phone Number *</label>
+                    <input type="tel" name="donor_phone" value="{{ current_user.phone if current_user else '' }}" placeholder="e.g. 555-0144" required class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email Address *</label>
+                    <input type="email" name="donor_email" value="{{ current_user.email if current_user else '' }}" placeholder="david@example.com" required class="form-control">
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div class="form-group">
+                    <label class="form-label">Units Pledging *</label>
+                    <input type="number" name="units_pledged" min="1" max="2" value="1" required class="form-control">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Estimated Arrival Time</label>
+                    <select name="arrival_time" class="form-select">
+                        <option value="Immediately (Within 1 hr)">Immediately (&lt;1 hr)</option>
+                        <option value="Within 2-4 hours" selected>Within 2-4 hours</option>
+                        <option value="Tomorrow morning">Tomorrow morning</option>
+                    </select>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button type="button" onclick="closeModal('volunteerPledgeModal')" class="btn btn-outline">Cancel</button>
+                <button type="submit" class="btn btn-success">Confirm Donation Pledge</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function openVolunteerPledgeModal(reqId, patientName, bloodGroup, hospitalName) {
+        document.getElementById('volPledgeRequestId').value = reqId;
+        document.getElementById('volunteerModalSubtitle').innerText = `Pledging blood for Patient ${patientName} (${bloodGroup}) at ${hospitalName}`;
+        openModal('volunteerPledgeModal');
+    }
+
+    function handleVolunteerSubmit(e) {
+        e.preventDefault();
+        const form = document.getElementById('volunteerPledgeForm');
+        const formData = new FormData(form);
+        const reqId = formData.get('request_id');
+
+        fetch('/api/respond-urgent', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                closeModal('volunteerPledgeModal');
+                alert(data.message || "Thank you! Your donation pledge has been recorded.");
+
+                const countEl = document.getElementById(`pledge-count-${reqId}`);
+                const pctEl = document.getElementById(`pledge-pct-${reqId}`);
+                const barEl = document.getElementById(`pledge-bar-${reqId}`);
+
+                if (countEl && pctEl && barEl) {
+                    countEl.innerText = data.units_fulfilled;
+                    const pct = Math.min(100, Math.round((data.units_fulfilled / data.units_needed) * 100));
+                    pctEl.innerText = `${pct}%`;
+                    barEl.style.width = `${pct}%`;
+                    if (pct >= 100) {
+                        barEl.classList.add('fulfilled');
+                    }
+                }
+            } else {
+                alert(data.message || "Could not record pledge.");
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert("Error submitting donation pledge.");
+        });
+    }
+</script>
 {% endblock %}

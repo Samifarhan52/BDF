@@ -99,41 +99,69 @@ Searchable donor directory linked with geolocation coordinates and verified badg
 
 ### 3. `urgent_requests` Table
 Critical emergency cases posted by hospitals with live fulfillment progress tracking.
-- `id`, `patient_name`, `blood_group`, `units_needed`, `units_fulfilled`, `urgency_level`, `hospital_name`, `city`, `hotline`, `notes`, `status` (`ACTIVE` / `FULFILLED`), `posted_by`
+- `id`, `patient_name`, `blood_group`, `units_needed`, `units_fulfilled`, `urgency_level`, `hospital_name`, `blood_bank_id`, `city`, `hotline`, `component_type`, `notes`, `status` (`ACTIVE` / `FULFILLED`), `posted_by`
 
 ### 4. `request_responses` Table
 Logs each donor's commitment/pledge when volunteering for an emergency.
 - `id`, `request_id`, `donor_name`, `donor_email`, `blood_group`, `phone`, `units_pledged`, `status` (`PLEDGED`), `created_at`
 
-### 5. `blood_banks` Table
-Hospital blood inventory reserves across major groups.
-- `id`, `name`, `city`, `address`, `phone`, `stock_o_neg`, `stock_o_pos`, `stock_a_pos`, `stock_b_pos`, `stock_ab_pos`, `operating_hours`
+### 5. `blood_banks` Table (Newly Enhanced!)
+Registered clinical blood banks and medical transfusion centers.
+- `id`, `name`, `hospital_name`, `city`, `address`, `phone`, `email`, `operating_hours`, `created_at`
+
+### 6. `blood_inventory` Table (Item Storage per Bank!)
+Item packets stored per facility with component separation and expiry tracking.
+- `id`, `blood_bank_id` (FK to `blood_banks.id`), `blood_group`, `component_type` (Whole Blood, PRBC, Platelets, FFP), `units_available`, `expiry_date`, `status` (`In Stock`, `Low Stock`, `Out of Stock`)
 
 ---
 
-## 🎓 Recommended 5-Minute Presentation Flow for Professors
+## 🚀 Advanced Features Added for College Review
 
-1. **Homepage & UI Authenticity**:
-   - Show the emergency announcement bar, LifePulse branding, and click the **`Status: Available`** toggle in the navbar to show live donor availability updates.
-   - Point to the live counters (Verified Donors, Active Requests, Lives Impacted).
-2. **Search Engine & Spatial Matching**:
-   - Search for **`O-`** in **`New York`**. Show verified donor results with contact options and the Leaflet interactive map.
-3. **Emergency Tracking & Volunteer Pledge (Key Feature)**:
-   - Scroll down to **"Active Urgent Blood Needs"** (`John Doe`, `Alice Wong`, `vijay`).
-   - Notice the live progress bar: e.g. *1 of 2 Units Secured (50%)*.
-   - Click **"Volunteer / I Can Donate"** on a card, confirm the pledge, and watch the progress bar and unit count increase in real time!
-4. **Authentication & Dashboard**:
-   - Go to **Login** &rarr; click **Autofill "nihil"** &rarr; click **Sign In**.
-   - Show the **Digital Donor ID Card**, the **Medical Eligibility Countdown Tracker** (56-day rule), and the list of pledged emergency commitments.
-   - Logout &rarr; click **Autofill "Dr. Sarah Jenkins"** &rarr; show the **Hospital Coordinator Portal** with broadcast management and one-click fulfillment.
-5. **Hospital Blood Banks & Inventory**:
-   - Click **Blood Banks** in the navigation. Show the live stock meters (O- Critical, A+ Normal, etc.) across regional medical centers.
-6. **Medical Compatibility Engine & Viva Answers**:
-   - Open **Compatibility Matrix**. Click **O-** (Universal Donor) and **AB+** (Universal Recipient) to explain the biological rules to the evaluators.
+1. **Pure HTML5 & Custom CSS3 Architecture**:
+   - Zero reliance on external CSS utility CDNs (Tailwind removed for self-contained college review).
+   - Bespoke healthcare design system in `static/css/style.css` (offline-ready, responsive, modular).
+
+2. **Register Blood Banks Directly in SQLite**:
+   - Web modal to add new regional blood centers with address, emergency phone, and 24/7 operating hours.
+
+3. **Add Items & Inventory into Blood Banks**:
+   - Facility coordinators can add specific blood unit items (`blood_inventory`), selecting Blood Group, Component Type (PRBC, Platelets, Plasma), unit count, and expiry date.
+
+4. **Dynamic Database Dropdown Method in Urgent Needs**:
+   - When posting an urgent need, users select their affiliated Hospital/Blood Bank directly from a **dynamic database-populated `<select>` dropdown**.
+   - Selecting a blood bank automatically populates city and emergency hotline data!
+
+5. **Live Availability vs Needs Comparison Dashboard (`/availability-and-needs`)**:
+   - Dual-track analytics comparing aggregate blood bank stock across 8 blood groups vs active patient requests.
+   - Matching engine highlights:
+     - 🟢 **Stock Match**: Direct availability in assigned facility.
+     - 🟡 **City Match**: Regional stock available nearby.
+     - 🔴 **Shortage**: Donor dispatch needed.
+   - **1-Click Fulfill from Stock**: Dispenses blood units directly from SQLite inventory and updates patient need status to `FULFILLED`.
+
+---
+
+## 🎓 Recommended Presentation Flow for Professors
+
+1. **Pure HTML + CSS Healthcare System**:
+   - Explain that all layouts, cards, and modal components are hand-crafted in pure HTML5 and CSS3 (`style.css`), running completely locally with zero external CDN dependencies.
+2. **Registering a New Blood Bank**:
+   - Navigate to **"Blood Banks & Items"** (`/blood-banks`).
+   - Click **"+ Register Blood Bank"** &rarr; fill in facility name and city &rarr; observe new bank appearing immediately.
+3. **Adding Items into Blood Bank Inventory**:
+   - On any blood bank card, click **"+ Add Item to this Bank"** (or top **"+ Stock Blood Item"**).
+   - Select Blood Group (e.g. `O-`), Component (e.g. `PRBC`), units (e.g. `10`), and submit. Show the newly added inventory item table.
+4. **Posting Urgent Need with Dropdown Method**:
+   - Click **"+ Post Urgent Need"**.
+   - Point out the **Hospital / Blood Bank Dropdown** dynamically populated from the database. Notice how selecting a bank automatically populates the city and hotline.
+5. **Live Availability & Needs Matching Engine**:
+   - Go to **"Availability vs Needs"** (`/availability-and-needs`).
+   - Show the 8-group reserve overview.
+   - In the matching table, click **"Fulfill 1 Unit"** &rarr; observe SQLite atomic stock deduction and real-time request fulfillment!
 
 ---
 
 ## 👨‍💻 Author & Credits
 - **Project Topic:** Blood Donor Finder Website
-- **Technologies:** Python 3, Flask, SQLite3, Werkzeug Security, Tailwind CSS, Leaflet.js, FontAwesome 6
+- **Technologies:** Python 3, Flask, SQLite3, Pure HTML5, Pure CSS3, Werkzeug Security, FontAwesome 6
 - **Status:** Complete, Fully Tested, Enterprise-Grade, and Ready to Demonstrate

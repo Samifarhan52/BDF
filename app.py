@@ -36,16 +36,7 @@ COMPATIBILITY = {
     }
 }
 
-# Distance calculation helper (Haversine formula in km)
-def haversine_distance(lat1, lon1, lat2, lon2):
-    if not (lat1 and lon1 and lat2 and lon2):
-        return None
-    R = 6371.0
-    dlat = math.radians(lat2 - lat1)
-    dlon = math.radians(lon2 - lon1)
-    a = math.sin(dlat / 2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon / 2)**2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-    return round(R * c, 1)
+BLOOD_COMPONENTS = ['Whole Blood', 'Packed Red Blood Cells (PRBC)', 'Platelets', 'Fresh Frozen Plasma (FFP)', 'Cryoprecipitate']
 
 def get_current_user():
     user_id = session.get('user_id')
@@ -60,12 +51,16 @@ def get_stats():
     conn = get_db_connection()
     donors_count = conn.execute("SELECT COUNT(*) FROM donors WHERE is_available = 1").fetchone()[0]
     urgent_count = conn.execute("SELECT COUNT(*) FROM urgent_requests WHERE status = 'ACTIVE'").fetchone()[0]
+    blood_banks_count = conn.execute("SELECT COUNT(*) FROM blood_banks").fetchone()[0]
+    total_stock_units = conn.execute("SELECT SUM(units_available) FROM blood_inventory").fetchone()[0] or 0
     total_donations = conn.execute("SELECT SUM(donations_count) FROM donors").fetchone()[0] or 10
-    lives_impacted = total_donations * 3
+    lives_impacted = total_donations * 3 + total_stock_units
     conn.close()
     return {
         'available_donors': donors_count,
         'urgent_requests': urgent_count,
+        'blood_banks_count': blood_banks_count,
+        'total_stock_units': total_stock_units,
         'lives_impacted': lives_impacted
     }
 
@@ -74,9 +69,9 @@ def inject_global_data():
     current_user = get_current_user()
     conn = get_db_connection()
     active_urgent_count = conn.execute("SELECT COUNT(*) FROM urgent_requests WHERE status = 'ACTIVE'").fetchone()[0]
+    all_blood_banks = [dict(b) for b in conn.execute("SELECT id, name, hospital_name, city, phone FROM blood_banks ORDER BY name ASC").fetchall()]
     conn.close()
 
-    # Fallback status for navbar display
     display_status = current_user['is_available'] if current_user else 1
     status_text = 'Available' if display_status == 1 else 'Unavailable'
     display_name = current_user['name'] if current_user else 'nihil'
@@ -88,7 +83,9 @@ def inject_global_data():
         'display_name': display_name,
         'stats': get_stats(),
         'active_urgent_count': active_urgent_count,
-        'blood_groups': ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']
+        'all_blood_banks': all_blood_banks,
+        'blood_groups': ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'],
+        'blood_components': BLOOD_COMPONENTS
     }
 
 # ----------------- Authentication Routes ----------------- #
@@ -154,24 +151,15 @@ def signup():
         ''', (name, email, pwd_hash, role, blood_group, phone, city, state, weight_kg))
         new_user_id = cursor.lastrowid
 
-        # Also add to donors table if role is donor
         if role == 'donor':
-            coords = {
-                'new york': (40.7128, -74.0060),
-                'chennai': (13.0827, 80.2707),
-                'san francisco': (37.7749, -122.4194),
-                'chicago': (41.8781, -87.6298)
-            }
-            lat, lon = coords.get(city.lower(), (40.7128, -74.0060))
             cursor.execute('''
-                INSERT INTO donors (user_id, name, blood_group, age, gender, phone, email, city, state, latitude, longitude, is_available, is_verified, donations_count)
-                VALUES (?, ?, ?, 25, 'Not specified', ?, ?, ?, ?, ?, ?, 1, 1, 0)
-            ''', (new_user_id, name, blood_group, phone, email, city, state, lat, lon))
+                INSERT INTO donors (user_id, name, blood_group, age, gender, phone, email, city, state, is_available, is_verified, donations_count)
+                VALUES (?, ?, ?, 25, 'Not specified', ?, ?, ?, ?, 1, 1, 0)
+            ''', (new_user_id, name, blood_group, phone, email, city, state))
 
         conn.commit()
         conn.close()
 
-        # Auto-login
         session['user_id'] = new_user_id
         session['username'] = name
         session['role'] = role
@@ -200,7 +188,6 @@ def dashboard():
 
     conn = get_db_connection()
 
-    # If Donor: fetch pledges and calculate eligibility
     pledges = []
     eligibility_info = {}
     if user['role'] == 'donor':
@@ -212,7 +199,6 @@ def dashboard():
             ORDER BY rr.created_at DESC
         ''', (user['email'], user['name'])).fetchall()
 
-        # Calculate next safe donation date (56 days rule)
         if user.get('last_donation_date'):
             try:
                 last_dt = datetime.strptime(user['last_donation_date'], '%Y-%m-%d')
@@ -228,7 +214,6 @@ def dashboard():
         else:
             eligibility_info = {'is_eligible': True, 'days_left': 0, 'next_date': 'Available now'}
 
-    # If Hospital Coordinator: fetch requests posted by this user/hospital
     hospital_requests = []
     if user['role'] == 'hospital':
         hospital_requests = conn.execute('''
@@ -268,7 +253,6 @@ def edit_profile():
         WHERE id = ?
     ''', (phone, city, state, blood_group, last_donation_date or None, user['id']))
 
-    # Also update donors table
     conn.execute('''
         UPDATE donors
         SET phone = ?, city = ?, state = ?, blood_group = ?, last_donation_date = ?
@@ -280,80 +264,245 @@ def edit_profile():
     flash('Your profile and contact information have been updated.', 'success')
     return redirect(url_for('dashboard'))
 
-# ----------------- Emergency Response & Tracking APIs ----------------- #
-
-@app.route('/api/respond-urgent', methods=['POST'])
-def api_respond_urgent():
-    req_id = request.form.get('request_id', type=int)
-    donor_name = request.form.get('donor_name', '').strip()
-    donor_email = request.form.get('donor_email', '').strip()
-    phone = request.form.get('phone', '').strip()
-    blood_group = request.form.get('blood_group', '').strip()
-
-    current_user = get_current_user()
-    if current_user:
-        donor_name = donor_name or current_user['name']
-        donor_email = donor_email or current_user['email']
-        phone = phone or current_user['phone']
-        blood_group = blood_group or current_user['blood_group']
-
-    if not req_id or not donor_name or not phone:
-        return jsonify({'success': False, 'message': 'Please provide your name and contact phone number.'}), 400
-
-    conn = get_db_connection()
-    req_row = conn.execute("SELECT * FROM urgent_requests WHERE id = ?", (req_id,)).fetchone()
-    if not req_row:
-        conn.close()
-        return jsonify({'success': False, 'message': 'Urgent request not found.'}), 404
-
-    # Record response
-    conn.execute('''
-        INSERT INTO request_responses (request_id, donor_name, donor_email, blood_group, phone, units_pledged, status)
-        VALUES (?, ?, ?, ?, ?, 1, 'PLEDGED')
-    ''', (req_id, donor_name, donor_email, blood_group, phone))
-
-    # Increment fulfilled units
-    new_fulfilled = (req_row['units_fulfilled'] or 0) + 1
-    new_status = 'FULFILLED' if new_fulfilled >= req_row['units_needed'] else 'ACTIVE'
-
-    conn.execute('''
-        UPDATE urgent_requests
-        SET units_fulfilled = ?, status = ?
-        WHERE id = ?
-    ''', (new_fulfilled, new_status, req_id))
-    conn.commit()
-    conn.close()
-
-    return jsonify({
-        'success': True,
-        'message': f'Thank you {donor_name}! Your commitment to donate has been broadcasted to {req_row["hospital_name"]}.',
-        'units_fulfilled': new_fulfilled,
-        'units_needed': req_row['units_needed'],
-        'status': new_status
-    })
-
-@app.route('/api/mark-fulfilled/<int:req_id>', methods=['POST'])
-def api_mark_fulfilled(req_id):
-    user = get_current_user()
-    conn = get_db_connection()
-    conn.execute("UPDATE urgent_requests SET status = 'FULFILLED' WHERE id = ?", (req_id,))
-    conn.commit()
-    conn.close()
-    flash('Emergency blood request marked as fulfilled. Donors have been notified.', 'success')
-    return redirect(request.referrer or url_for('urgent_needs_page'))
-
-# ----------------- Blood Banks Directory ----------------- #
+# ----------------- Blood Banks & Items Inventory Management ----------------- #
 
 @app.route('/blood-banks')
 def blood_banks_page():
     city = request.args.get('city', '').strip()
     conn = get_db_connection()
+    
     if city:
         banks = conn.execute("SELECT * FROM blood_banks WHERE city LIKE ? ORDER BY name ASC", (f"%{city}%",)).fetchall()
     else:
         banks = conn.execute("SELECT * FROM blood_banks ORDER BY city ASC, name ASC").fetchall()
+        
+    bank_list = []
+    for b in banks:
+        b_dict = dict(b)
+        items = conn.execute("SELECT * FROM blood_inventory WHERE blood_bank_id = ? ORDER BY blood_group ASC", (b['id'],)).fetchall()
+        item_list = [dict(it) for it in items]
+        b_dict['items'] = item_list
+        b_dict['inventory_items'] = item_list
+        b_dict['total_units'] = sum(it['units_available'] for it in item_list)
+        bank_list.append(b_dict)
+
     conn.close()
-    return render_template('blood_banks.html', blood_banks=banks, selected_city=city)
+    return render_template('blood_banks.html', blood_banks=bank_list, selected_city=city)
+
+@app.route('/add-blood-bank', methods=['POST'])
+def add_blood_bank():
+    name = request.form.get('name', '').strip()
+    hospital_name = request.form.get('hospital_name', '').strip() or name
+    city = request.form.get('city', '').strip()
+    address = request.form.get('address', '').strip()
+    phone = request.form.get('phone', '').strip()
+    email = request.form.get('email', '').strip()
+    operating_hours = request.form.get('operating_hours', '24/7 Emergency Transfusion').strip()
+
+    if not name or not city or not phone:
+        flash('Please fill in required fields: Blood Bank Name, City, and Phone Number.', 'danger')
+        return redirect(url_for('blood_banks_page'))
+
+    conn = get_db_connection()
+    conn.execute('''
+        INSERT INTO blood_banks (name, hospital_name, city, address, phone, email, operating_hours)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    ''', (name, hospital_name, city, address, phone, email, operating_hours))
+    conn.commit()
+    conn.close()
+
+    flash(f'New Blood Bank "{name}" successfully registered into the system!', 'success')
+    return redirect(url_for('blood_banks_page'))
+
+@app.route('/add-inventory-item', methods=['POST'])
+def add_inventory_item():
+    blood_bank_id = request.form.get('blood_bank_id', type=int)
+    blood_group = request.form.get('blood_group', '').strip()
+    component_type = request.form.get('component_type', 'Whole Blood').strip()
+    units = request.form.get('units_available', type=int) or 1
+    expiry_date = request.form.get('expiry_date', '').strip()
+
+    if not blood_bank_id or not blood_group:
+        flash('Please select a Blood Bank and Blood Group to add items.', 'danger')
+        return redirect(url_for('blood_banks_page'))
+
+    status = 'In Stock' if units > 3 else ('Low Stock' if units > 0 else 'Out of Stock')
+
+    conn = get_db_connection()
+    # Check if this group and component already exists for this bank
+    existing = conn.execute('''
+        SELECT id, units_available FROM blood_inventory
+        WHERE blood_bank_id = ? AND blood_group = ? AND component_type = ?
+    ''', (blood_bank_id, blood_group, component_type)).fetchone()
+
+    if existing:
+        new_units = existing['units_available'] + units
+        new_status = 'In Stock' if new_units > 3 else 'Low Stock'
+        conn.execute('''
+            UPDATE blood_inventory
+            SET units_available = ?, status = ?, expiry_date = COALESCE(?, expiry_date)
+            WHERE id = ?
+        ''', (new_units, new_status, expiry_date or None, existing['id']))
+    else:
+        conn.execute('''
+            INSERT INTO blood_inventory (blood_bank_id, blood_group, component_type, units_available, expiry_date, status)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (blood_bank_id, blood_group, component_type, units, expiry_date or None, status))
+
+    bank_name = conn.execute("SELECT name FROM blood_banks WHERE id = ?", (blood_bank_id,)).fetchone()
+    conn.commit()
+    conn.close()
+
+    bname = bank_name['name'] if bank_name else 'Blood Bank'
+    flash(f'Successfully added {units} unit(s) of {blood_group} ({component_type}) to {bname}!', 'success')
+    return redirect(request.referrer or url_for('blood_banks_page'))
+
+# ----------------- Availability & Needs Dashboard ----------------- #
+
+@app.route('/availability-and-needs')
+def availability_and_needs():
+    conn = get_db_connection()
+
+    # 1. Total blood units available grouped by blood group across all banks
+    stock_by_group = {}
+    for bg in ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']:
+        stock_by_group[bg] = 0
+
+    stock_rows = conn.execute('''
+        SELECT blood_group, SUM(units_available) as total_units
+        FROM blood_inventory
+        GROUP BY blood_group
+    ''').fetchall()
+    for r in stock_rows:
+        stock_by_group[r['blood_group']] = r['total_units'] or 0
+
+    # 2. Donors count available per blood group
+    donors_by_group = {}
+    for bg in ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-']:
+        donors_by_group[bg] = 0
+
+    donor_rows = conn.execute('''
+        SELECT blood_group, COUNT(*) as count
+        FROM donors
+        WHERE is_available = 1
+        GROUP BY blood_group
+    ''').fetchall()
+    for r in donor_rows:
+        donors_by_group[r['blood_group']] = r['count'] or 0
+
+    # 3. Active Urgent Needs
+    needs = conn.execute('''
+        SELECT ur.*, bb.name as bank_name
+        FROM urgent_requests ur
+        LEFT JOIN blood_banks bb ON ur.blood_bank_id = bb.id
+        WHERE ur.status = 'ACTIVE'
+        ORDER BY
+            CASE ur.urgency_level
+                WHEN 'CRITICAL NEED' THEN 1
+                WHEN 'HIGH NEED' THEN 2
+                ELSE 3
+            END,
+            ur.created_at DESC
+    ''').fetchall()
+
+    # Match each need against live availability
+    needs_matched = []
+    for n in needs:
+        n_dict = dict(n)
+        bg = n['blood_group']
+        needed = n['units_needed'] - (n['units_fulfilled'] or 0)
+        
+        # Check stock in assigned blood bank
+        bank_stock = 0
+        if n['blood_bank_id']:
+            b_row = conn.execute('''
+                SELECT SUM(units_available) as units
+                FROM blood_inventory
+                WHERE blood_bank_id = ? AND blood_group = ?
+            ''', (n['blood_bank_id'], bg)).fetchone()
+            bank_stock = b_row['units'] or 0
+
+        city_stock_row = conn.execute('''
+            SELECT SUM(bi.units_available) as units
+            FROM blood_inventory bi
+            JOIN blood_banks bb ON bi.blood_bank_id = bb.id
+            WHERE bb.city LIKE ? AND bi.blood_group = ?
+        ''', (f"%{n['city']}%", bg)).fetchone()
+        city_stock = city_stock_row['units'] or 0
+
+        n_dict['bank_stock'] = bank_stock
+        n_dict['city_stock'] = city_stock
+        n_dict['units_remaining'] = needed
+        n_dict['can_fulfill_from_bank'] = bank_stock >= needed
+        n_dict['can_fulfill_from_city'] = city_stock >= needed
+        needs_matched.append(n_dict)
+
+    # 4. Detailed items table per blood bank
+    detailed_inventory = conn.execute('''
+        SELECT bi.*, bb.name as bank_name, bb.city as bank_city
+        FROM blood_inventory bi
+        JOIN blood_banks bb ON bi.blood_bank_id = bb.id
+        ORDER BY bb.name ASC, bi.blood_group ASC
+    ''').fetchall()
+
+    conn.close()
+
+    return render_template(
+        'availability_needs.html',
+        stock_by_group=stock_by_group,
+        donors_by_group=donors_by_group,
+        needs=needs_matched,
+        detailed_inventory=detailed_inventory
+    )
+
+@app.route('/fulfill-from-stock', methods=['POST'])
+def fulfill_from_stock():
+    request_id = request.form.get('request_id', type=int)
+    blood_bank_id = request.form.get('blood_bank_id', type=int)
+    units_to_fulfill = request.form.get('units', type=int) or 1
+
+    conn = get_db_connection()
+    req = conn.execute("SELECT * FROM urgent_requests WHERE id = ?", (request_id,)).fetchone()
+    if not req:
+        conn.close()
+        flash('Urgent request record not found.', 'danger')
+        return redirect(url_for('availability_and_needs'))
+
+    bg = req['blood_group']
+    
+    # Check inventory
+    inv = conn.execute('''
+        SELECT id, units_available FROM blood_inventory
+        WHERE blood_bank_id = ? AND blood_group = ? AND units_available >= ?
+        LIMIT 1
+    ''', (blood_bank_id, bg, units_to_fulfill)).fetchone()
+
+    if not inv:
+        # Fallback to any inventory item of that blood group with at least 1 unit
+        inv = conn.execute('''
+            SELECT id, units_available FROM blood_inventory
+            WHERE blood_bank_id = ? AND blood_group = ? AND units_available > 0
+            LIMIT 1
+        ''', (blood_bank_id, bg)).fetchone()
+
+    if not inv:
+        conn.close()
+        flash(f'Insufficient {bg} units in selected Blood Bank inventory.', 'danger')
+        return redirect(url_for('availability_and_needs'))
+
+    deduct = min(units_to_fulfill, inv['units_available'])
+    new_stock = inv['units_available'] - deduct
+    conn.execute("UPDATE blood_inventory SET units_available = ? WHERE id = ?", (new_stock, inv['id']))
+
+    new_fulfilled = (req['units_fulfilled'] or 0) + deduct
+    new_status = 'FULFILLED' if new_fulfilled >= req['units_needed'] else 'ACTIVE'
+    conn.execute("UPDATE urgent_requests SET units_fulfilled = ?, status = ? WHERE id = ?", (new_fulfilled, new_status, request_id))
+    
+    conn.commit()
+    conn.close()
+
+    flash(f'Success! Dispensed {deduct} unit(s) of {bg} from inventory for Patient {req["patient_name"]}. Status: {new_status}!', 'success')
+    return redirect(url_for('availability_and_needs'))
 
 # ----------------- Web Page Routes ----------------- #
 
@@ -365,11 +514,11 @@ def index():
 
     conn = get_db_connection()
 
-    # Query urgent requests with responses count
     urgent_requests = conn.execute('''
-        SELECT ur.*, COUNT(rr.id) as response_count
+        SELECT ur.*, COUNT(rr.id) as response_count, bb.name as blood_bank_name
         FROM urgent_requests ur
         LEFT JOIN request_responses rr ON ur.id = rr.request_id
+        LEFT JOIN blood_banks bb ON ur.blood_bank_id = bb.id
         WHERE ur.status = 'ACTIVE'
         GROUP BY ur.id
         ORDER BY
@@ -468,13 +617,15 @@ def donors_page():
 def urgent_needs_page():
     urgency_filter = request.args.get('urgency', '').strip()
     blood_group = request.args.get('blood_group', '').strip()
+    bank_id = request.args.get('blood_bank_id', type=int)
     city = request.args.get('city', '').strip()
 
     conn = get_db_connection()
     query = '''
-        SELECT ur.*, COUNT(rr.id) as response_count
+        SELECT ur.*, COUNT(rr.id) as response_count, bb.name as blood_bank_name
         FROM urgent_requests ur
         LEFT JOIN request_responses rr ON ur.id = rr.request_id
+        LEFT JOIN blood_banks bb ON ur.blood_bank_id = bb.id
         WHERE ur.status = 'ACTIVE'
     '''
     params = []
@@ -486,6 +637,10 @@ def urgent_needs_page():
     if blood_group:
         query += " AND ur.blood_group = ?"
         params.append(blood_group)
+
+    if bank_id:
+        query += " AND ur.blood_bank_id = ?"
+        params.append(bank_id)
 
     if city:
         query += " AND ur.city LIKE ?"
@@ -510,6 +665,7 @@ def urgent_needs_page():
         requests=requests_list,
         selected_urgency=urgency_filter,
         selected_group=blood_group,
+        selected_bank=bank_id,
         selected_city=city
     )
 
@@ -528,14 +684,6 @@ def register_donor():
         last_donation_date = request.form.get('last_donation_date', '')
         is_available = 1 if request.form.get('is_available') == 'on' else 0
 
-        coords = {
-            'new york': (40.7128, -74.0060),
-            'chennai': (13.0827, 80.2707),
-            'san francisco': (37.7749, -122.4194),
-            'chicago': (41.8781, -87.6298)
-        }
-        lat, lon = coords.get(city.lower(), (40.7128, -74.0060))
-
         if not name or not blood_group or not phone or not city:
             flash('Please fill in all required fields (Name, Blood Group, Phone, City).', 'danger')
             return redirect(url_for('register_donor'))
@@ -543,9 +691,9 @@ def register_donor():
         conn = get_db_connection()
         user_id = session.get('user_id')
         conn.execute('''
-            INSERT INTO donors (user_id, name, blood_group, age, gender, phone, email, city, state, zip_code, latitude, longitude, last_donation_date, is_available, is_verified, donations_count)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1, 1)
-        ''', (user_id, name, blood_group, age, gender, phone, email, city, state, zip_code, lat, lon, last_donation_date, is_available))
+            INSERT INTO donors (user_id, name, blood_group, age, gender, phone, email, city, state, zip_code, last_donation_date, is_available, is_verified, donations_count)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 1)
+        ''', (user_id, name, blood_group, age, gender, phone, email, city, state, zip_code, last_donation_date, is_available))
         conn.commit()
         conn.close()
 
@@ -562,40 +710,45 @@ def compatibility_page():
 def post_urgent_need():
     patient_name = request.form.get('patient_name', '').strip()
     blood_group = request.form.get('blood_group', '').strip()
+    component_type = request.form.get('component_type', 'Whole Blood').strip()
     units_needed = request.form.get('units_needed', type=int) or 1
     urgency_level = request.form.get('urgency_level', 'HIGH NEED').strip()
-    hospital_name = request.form.get('hospital_name', '').strip()
+    blood_bank_id = request.form.get('blood_bank_id', type=int)
+    custom_hospital = request.form.get('hospital_name', '').strip()
     city = request.form.get('city', '').strip()
     hotline = request.form.get('hotline', '').strip()
     notes = request.form.get('notes', '').strip()
 
-    coords = {
-        'new york': (40.7903, -73.9530),
-        'chennai': (13.0827, 80.2707),
-        'san francisco': (37.7631, -122.4582),
-        'chicago': (41.8953, -87.6214)
-    }
-    lat, lon = coords.get(city.lower(), (40.7128, -74.0060))
+    conn = get_db_connection()
+    hospital_name = custom_hospital
+    if blood_bank_id:
+        bank = conn.execute("SELECT name, hospital_name, city, phone FROM blood_banks WHERE id = ?", (blood_bank_id,)).fetchone()
+        if bank:
+            hospital_name = bank['name']
+            if not city:
+                city = bank['city']
+            if not hotline:
+                hotline = bank['phone']
 
     if not patient_name or not blood_group or not hospital_name or not hotline:
-        flash('Please fill in all mandatory fields for emergency need request.', 'danger')
-        return redirect(request.referrer or url_for('index'))
+        conn.close()
+        flash('Please fill in required fields: Patient Name, Blood Group, Blood Bank/Hospital, and Hotline.', 'danger')
+        return redirect(request.referrer or url_for('urgent_needs_page'))
 
     current_user = get_current_user()
     posted_by = current_user['name'] if current_user else 'Emergency Coordinator'
 
-    conn = get_db_connection()
     conn.execute('''
-        INSERT INTO urgent_requests (patient_name, blood_group, units_needed, units_fulfilled, urgency_level, hospital_name, city, hotline, notes, latitude, longitude, posted_by)
-        VALUES (?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?)
-    ''', (patient_name, blood_group, units_needed, urgency_level, hospital_name, city, hotline, notes, lat, lon, posted_by))
+        INSERT INTO urgent_requests (patient_name, blood_group, component_type, units_needed, units_fulfilled, urgency_level, blood_bank_id, hospital_name, city, hotline, notes, posted_by)
+        VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?)
+    ''', (patient_name, blood_group, component_type, units_needed, urgency_level, blood_bank_id, hospital_name, city, hotline, notes, posted_by))
     conn.commit()
     conn.close()
 
-    flash(f'Urgent emergency request for {patient_name} ({blood_group}) posted successfully! Donors have been alerted.', 'success')
+    flash(f'Urgent emergency request for {patient_name} ({blood_group}) posted successfully! Donors and Blood Banks alerted.', 'success')
     return redirect(url_for('urgent_needs_page'))
 
-# ----------------- RESTful API Endpoints ----------------- #
+# ----------------- RESTful APIs ----------------- #
 
 @app.route('/api/toggle-status', methods=['POST'])
 def api_toggle_status():
@@ -608,7 +761,6 @@ def api_toggle_status():
         conn.execute("UPDATE users SET is_available = ? WHERE id = ?", (new_avail, user['id']))
         conn.execute("UPDATE donors SET is_available = ? WHERE user_id = ? OR email = ?", (new_avail, user['id'], user['email']))
     else:
-        # Toggle demo nihil user
         current = conn.execute("SELECT is_available FROM donors WHERE name LIKE 'nihil%' LIMIT 1").fetchone()
         new_avail = 0 if current and current['is_available'] == 1 else 1
         new_status = 'Available' if new_avail == 1 else 'Unavailable'
@@ -620,63 +772,52 @@ def api_toggle_status():
 
     return jsonify({'success': True, 'new_status': new_status, 'is_available': new_avail})
 
-@app.route('/api/stats')
-def api_stats():
-    return jsonify(get_stats())
+@app.route('/api/respond-urgent', methods=['POST'])
+def api_respond_urgent():
+    req_id = request.form.get('request_id', type=int)
+    donor_name = request.form.get('donor_name', '').strip()
+    donor_email = request.form.get('donor_email', '').strip()
+    phone = request.form.get('phone', '').strip()
+    blood_group = request.form.get('blood_group', '').strip()
 
-@app.route('/api/donors')
-def api_donors():
-    blood_group = request.args.get('blood_group', '').strip()
-    city = request.args.get('city', '').strip()
-    user_lat = request.args.get('lat', type=float)
-    user_lng = request.args.get('lng', type=float)
+    current_user = get_current_user()
+    if current_user:
+        donor_name = donor_name or current_user['name']
+        donor_email = donor_email or current_user['email']
+        phone = phone or current_user['phone']
+        blood_group = blood_group or current_user['blood_group']
+
+    if not req_id or not donor_name or not phone:
+        return jsonify({'success': False, 'message': 'Please provide your name and contact phone number.'}), 400
 
     conn = get_db_connection()
-    query = "SELECT * FROM donors WHERE 1=1"
-    params = []
+    req_row = conn.execute("SELECT * FROM urgent_requests WHERE id = ?", (req_id,)).fetchone()
+    if not req_row:
+        conn.close()
+        return jsonify({'success': False, 'message': 'Urgent request not found.'}), 404
 
-    if blood_group:
-        query += " AND blood_group = ?"
-        params.append(blood_group)
+    conn.execute('''
+        INSERT INTO request_responses (request_id, donor_name, donor_email, blood_group, phone, units_pledged, status)
+        VALUES (?, ?, ?, ?, ?, 1, 'PLEDGED')
+    ''', (req_id, donor_name, donor_email, blood_group, phone))
 
-    if city:
-        query += " AND city LIKE ?"
-        params.append(f"%{city}%")
+    new_fulfilled = (req_row['units_fulfilled'] or 0) + 1
+    new_status = 'FULFILLED' if new_fulfilled >= req_row['units_needed'] else 'ACTIVE'
 
-    rows = conn.execute(query, params).fetchall()
+    conn.execute('''
+        UPDATE urgent_requests
+        SET units_fulfilled = ?, status = ?
+        WHERE id = ?
+    ''', (new_fulfilled, new_status, req_id))
+    conn.commit()
     conn.close()
 
-    result = []
-    for r in rows:
-        d = dict(r)
-        if user_lat and user_lng and d['latitude'] and d['longitude']:
-            d['distance_km'] = haversine_distance(user_lat, user_lng, d['latitude'], d['longitude'])
-        else:
-            d['distance_km'] = None
-        result.append(d)
-
-    if user_lat and user_lng:
-        result.sort(key=lambda x: x['distance_km'] if x['distance_km'] is not None else 999999)
-
-    return jsonify(result)
-
-@app.route('/api/map-data')
-def api_map_data():
-    conn = get_db_connection()
-    donors = [dict(r) for r in conn.execute("SELECT id, name, blood_group, city, latitude, longitude, is_available, phone FROM donors WHERE latitude IS NOT NULL").fetchall()]
-    urgent = [dict(r) for r in conn.execute("SELECT id, patient_name, blood_group, units_needed, units_fulfilled, urgency_level, hospital_name, city, hotline, latitude, longitude FROM urgent_requests WHERE status = 'ACTIVE' AND latitude IS NOT NULL").fetchall()]
-    conn.close()
-    return jsonify({'donors': donors, 'urgent_requests': urgent})
-
-@app.route('/api/compatibility/<blood_group>')
-def api_compatibility(blood_group):
-    group = blood_group.upper()
-    if group not in COMPATIBILITY['recipient_can_receive_from']:
-        return jsonify({'error': 'Invalid blood group'}), 400
     return jsonify({
-        'blood_group': group,
-        'can_receive_from': COMPATIBILITY['recipient_can_receive_from'][group],
-        'can_donate_to': COMPATIBILITY['donor_can_give_to'][group]
+        'success': True,
+        'message': f'Thank you {donor_name}! Your commitment to donate has been recorded.',
+        'units_fulfilled': new_fulfilled,
+        'units_needed': req_row['units_needed'],
+        'status': new_status
     })
 
 @app.route('/report')
@@ -698,7 +839,7 @@ def download_pdf_report():
 
 if __name__ == '__main__':
     print("\n" + "="*60)
-    print("  🩸 LifePulse - Enterprise Blood Donor Finder Started")
-    print("  Local URL: http://127.0.0.1:5000 or http://localhost:5000")
+    print("  🩸 LifePulse - Pure HTML/CSS/SQLite Blood Donor Finder")
+    print("  Local URL: http://localhost:5000 or http://127.0.0.1:5000")
     print("="*60 + "\n")
     app.run(debug=True, host='0.0.0.0', port=5000)
