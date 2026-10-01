@@ -19,10 +19,10 @@
                 <span><strong>Emergency Blood Need?</strong> Post an urgent request or match available blood bank inventory instantly.</span>
             </div>
             <div class="announcement-actions">
-                <a href="{{ url_for('download_pdf_report') }}" class="btn btn-sm btn-outline" style="background: rgba(0,0,0,0.25); color: #fff; border-color: rgba(255,255,255,0.3);">
+                <a href="{{ url_for('download_pdf_report') }}" class="btn btn-sm btn-outline" style="background: rgba(0,0,0,0.25); color: #fff; border-color: rgba(255,255,255,0.3); font-size: 11.5px; padding: 4px 10px;">
                     <i class="fa-solid fa-file-pdf"></i> Download PDF Report
                 </a>
-                <button onclick="openModal('urgentNeedModal')" class="btn btn-sm btn-primary" style="background: #ffffff; color: var(--primary-dark);">
+                <button onclick="openModal('urgentNeedModal')" class="btn btn-sm btn-primary" style="background: #ffffff; color: var(--primary-dark); font-size: 11.5px; padding: 4px 12px; font-weight: 800;">
                     <i class="fa-solid fa-circle-plus"></i> Post Urgent Need
                 </button>
             </div>
@@ -40,42 +40,207 @@
                 <span>Life<span class="brand-accent">Pulse</span></span>
             </a>
 
-            <!-- Desktop Nav Links -->
+            <!-- Desktop Nav Links with Multi-Level Professional Dropdowns -->
             <nav>
                 <ul class="nav-links">
-                    <li><a href="{{ url_for('donors_page') }}" class="nav-link"><i class="fa-solid fa-magnifying-glass"></i> Find Donors</a></li>
-                    <li>
-                        <a href="{{ url_for('urgent_needs_page') }}" class="nav-link">
-                            <i class="fa-solid fa-truck-medical" style="color: var(--primary);"></i> Urgent Needs
+                    <!-- Dropdown 1: Donors & Matching -->
+                    <li class="nav-item">
+                        <button type="button" class="nav-link">
+                            <i class="fa-solid fa-users" style="color: var(--primary);"></i>
+                            <span>Donors &amp; Matching</span>
+                            <i class="fa-solid fa-chevron-down nav-chevron"></i>
+                        </button>
+                        <div class="nav-dropdown-menu">
+                            <a href="{{ url_for('donors_page') }}" class="dropdown-item">
+                                <div class="dropdown-icon icon-blue">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                </div>
+                                <div class="dropdown-text">
+                                    <div class="dropdown-heading">Find Blood Donors</div>
+                                    <div class="dropdown-desc">Search verified community donors by group and city</div>
+                                </div>
+                            </a>
+                            <a href="{{ url_for('register_donor') }}" class="dropdown-item">
+                                <div class="dropdown-icon icon-emerald">
+                                    <i class="fa-solid fa-user-plus"></i>
+                                </div>
+                                <div class="dropdown-text">
+                                    <div class="dropdown-heading">Register as a Donor</div>
+                                    <div class="dropdown-desc">Join our emergency on-call network &amp; get a digital ID</div>
+                                </div>
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="{{ url_for('compatibility_page') }}" class="dropdown-item">
+                                <div class="dropdown-icon icon-purple">
+                                    <i class="fa-solid fa-dna"></i>
+                                </div>
+                                <div class="dropdown-text">
+                                    <div class="dropdown-heading">Compatibility Matrix</div>
+                                    <div class="dropdown-desc">Interactive ABO &amp; Rh factor medical matching engine</div>
+                                </div>
+                            </a>
+                        </div>
+                    </li>
+
+                    <!-- Dropdown 2: Emergency Shortages -->
+                    <li class="nav-item">
+                        <button type="button" class="nav-link">
+                            <i class="fa-solid fa-truck-medical" style="color: var(--primary);"></i>
+                            <span>Emergency Needs</span>
                             {% if active_urgent_count %}
                             <span class="nav-counter-badge">{{ active_urgent_count }}</span>
                             {% endif %}
-                        </a>
+                            <i class="fa-solid fa-chevron-down nav-chevron"></i>
+                        </button>
+                        <div class="nav-dropdown-menu">
+                            <a href="{{ url_for('urgent_needs_page') }}" class="dropdown-item highlight">
+                                <div class="dropdown-icon icon-red">
+                                    <i class="fa-solid fa-triangle-exclamation"></i>
+                                </div>
+                                <div class="dropdown-text">
+                                    <div class="dropdown-heading">
+                                        Active Urgent Requests
+                                        {% if active_urgent_count %}
+                                        <span class="nav-counter-badge">{{ active_urgent_count }} Live</span>
+                                        {% endif %}
+                                    </div>
+                                    <div class="dropdown-desc">Hospital broadcast cases needing immediate blood units</div>
+                                </div>
+                            </a>
+                            <a href="javascript:void(0)" onclick="openModal('urgentNeedModal')" class="dropdown-item">
+                                <div class="dropdown-icon icon-amber">
+                                    <i class="fa-solid fa-circle-plus"></i>
+                                </div>
+                                <div class="dropdown-text">
+                                    <div class="dropdown-heading">Post Urgent Blood Need</div>
+                                    <div class="dropdown-desc">Broadcast emergency with automated blood bank dropdown</div>
+                                </div>
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="{{ url_for('urgent_needs_page') }}" class="dropdown-item">
+                                <div class="dropdown-icon icon-emerald">
+                                    <i class="fa-solid fa-hand-holding-heart"></i>
+                                </div>
+                                <div class="dropdown-text">
+                                    <div class="dropdown-heading">Volunteer &amp; Pledge</div>
+                                    <div class="dropdown-desc">Respond to pending hospital cases with 1-click pledges</div>
+                                </div>
+                            </a>
+                        </div>
                     </li>
-                    <li><a href="{{ url_for('blood_banks_page') }}" class="nav-link"><i class="fa-solid fa-hospital"></i> Blood Banks & Items</a></li>
-                    <li><a href="{{ url_for('availability_and_needs') }}" class="nav-link" style="color: #059669; font-weight: 700;"><i class="fa-solid fa-chart-pie"></i> Availability vs Needs</a></li>
-                    <li><a href="{{ url_for('compatibility_page') }}" class="nav-link"><i class="fa-solid fa-dna"></i> Compatibility</a></li>
+
+                    <!-- Dropdown 3: Blood Banks & Stocks -->
+                    <li class="nav-item">
+                        <button type="button" class="nav-link">
+                            <i class="fa-solid fa-hospital" style="color: #0284c7;"></i>
+                            <span>Banks &amp; Inventory</span>
+                            <i class="fa-solid fa-chevron-down nav-chevron"></i>
+                        </button>
+                        <div class="nav-dropdown-menu" style="min-width: 320px;">
+                            <a href="{{ url_for('availability_and_needs') }}" class="dropdown-item highlight">
+                                <div class="dropdown-icon icon-emerald">
+                                    <i class="fa-solid fa-scale-balanced"></i>
+                                </div>
+                                <div class="dropdown-text">
+                                    <div class="dropdown-heading">Availability vs Needs Matrix</div>
+                                    <div class="dropdown-desc">Real-time supply &amp; demand matching with 1-click fulfillment</div>
+                                </div>
+                            </a>
+                            <a href="{{ url_for('blood_banks_page') }}" class="dropdown-item">
+                                <div class="dropdown-icon icon-blue">
+                                    <i class="fa-solid fa-hospital"></i>
+                                </div>
+                                <div class="dropdown-text">
+                                    <div class="dropdown-heading">Blood Banks Directory</div>
+                                    <div class="dropdown-desc">Regional transfusion centers &amp; stored item unit lists</div>
+                                </div>
+                            </a>
+                            <div class="dropdown-divider"></div>
+                            <a href="javascript:void(0)" onclick="openModal('addBloodBankModal')" class="dropdown-item">
+                                <div class="dropdown-icon icon-slate">
+                                    <i class="fa-solid fa-plus"></i>
+                                </div>
+                                <div class="dropdown-text">
+                                    <div class="dropdown-heading">Register New Blood Bank</div>
+                                    <div class="dropdown-desc">Add a verified hospital blood bank facility into SQLite</div>
+                                </div>
+                            </a>
+                            <a href="javascript:void(0)" onclick="openModal('addInventoryModal')" class="dropdown-item">
+                                <div class="dropdown-icon icon-slate">
+                                    <i class="fa-solid fa-boxes-stacked"></i>
+                                </div>
+                                <div class="dropdown-text">
+                                    <div class="dropdown-heading">Stock Blood Bank Item</div>
+                                    <div class="dropdown-desc">Add inventory packets (PRBC, Platelets, Whole Blood, FFP)</div>
+                                </div>
+                            </a>
+                        </div>
+                    </li>
+
+                    <!-- Dropdown 4: Academic Docs & Reports -->
+                    <li class="nav-item">
+                        <button type="button" class="nav-link">
+                            <i class="fa-solid fa-file-lines" style="color: var(--text-muted);"></i>
+                            <span>Reports &amp; Guide</span>
+                            <i class="fa-solid fa-chevron-down nav-chevron"></i>
+                        </button>
+                        <div class="nav-dropdown-menu">
+                            <a href="{{ url_for('download_pdf_report') }}" class="dropdown-item">
+                                <div class="dropdown-icon icon-red">
+                                    <i class="fa-solid fa-file-pdf"></i>
+                                </div>
+                                <div class="dropdown-text">
+                                    <div class="dropdown-heading">Download PDF Report</div>
+                                    <div class="dropdown-desc">Official 7-chapter college engineering project report</div>
+                                </div>
+                            </a>
+                            <a href="{{ url_for('project_report') }}" target="_blank" class="dropdown-item">
+                                <div class="dropdown-icon icon-blue">
+                                    <i class="fa-solid fa-file-code"></i>
+                                </div>
+                                <div class="dropdown-text">
+                                    <div class="dropdown-heading">Interactive Documentation</div>
+                                    <div class="dropdown-desc">Full HTML architecture, database schema, and viva QA</div>
+                                </div>
+                            </a>
+                            <a href="/#how-it-works" class="dropdown-item">
+                                <div class="dropdown-icon icon-slate">
+                                    <i class="fa-solid fa-circle-question"></i>
+                                </div>
+                                <div class="dropdown-text">
+                                    <div class="dropdown-heading">How LifePulse Works</div>
+                                    <div class="dropdown-desc">Clinical triage workflows and 60-second response logic</div>
+                                </div>
+                            </a>
+                        </div>
+                    </li>
                 </ul>
             </nav>
 
-            <!-- Right Controls: Status Toggle, User/Login, Mobile Menu Button -->
+            <!-- Right Controls: Quick Emergency Action, Status Toggle, User/Login -->
             <div class="navbar-right">
+                <!-- Direct Emergency Post Button -->
+                <button onclick="openModal('urgentNeedModal')" class="btn-post-need" title="Broadcast urgent patient requirement">
+                    <i class="fa-solid fa-circle-plus"></i>
+                    <span>+ Post Need</span>
+                </button>
+
                 <!-- Donor Status Presence Beacon -->
                 <button id="statusToggleBtn" onclick="toggleDonorStatus()" class="status-pill {% if status_text == 'Available' %}available{% else %}unavailable{% endif %}" title="Click to toggle your donor availability">
                     <span id="statusIndicatorDot" class="status-dot"></span>
-                    <span>Status: <strong id="statusText">{{ status_text }}</strong></span>
+                    <span id="statusText">{{ status_text }}</span>
                 </button>
 
                 {% if is_authenticated %}
-                <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-outline">
-                    <i class="fa-solid fa-circle-user"></i> {{ current_user.name }}
+                <a href="{{ url_for('dashboard') }}" class="btn btn-sm btn-outline" style="font-weight: 700;">
+                    <i class="fa-solid fa-circle-user" style="color: var(--primary);"></i> {{ current_user.name.split(' ')[0] }}
                 </a>
-                <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline" style="color: var(--primary);" title="Logout">
+                <a href="{{ url_for('logout') }}" class="btn btn-sm btn-outline" style="color: var(--primary); padding: 6px 10px;" title="Logout">
                     <i class="fa-solid fa-power-off"></i>
                 </a>
                 {% else %}
-                <a href="{{ url_for('login') }}" class="btn btn-sm btn-outline">Login</a>
-                <a href="{{ url_for('signup') }}" class="btn btn-sm btn-primary">Sign Up</a>
+                <a href="{{ url_for('login') }}" class="btn btn-sm btn-outline" style="padding: 6px 14px;">Login</a>
+                <a href="{{ url_for('signup') }}" class="btn btn-sm btn-primary" style="padding: 6px 14px;">Sign Up</a>
                 {% endif %}
 
                 <!-- Mobile Hamburger Toggle -->
@@ -85,14 +250,30 @@
             </div>
         </div>
 
-        <!-- Mobile Drawer Menu -->
+        <!-- Mobile Drawer Menu (Organized Accordion / Grouped) -->
         <div id="mobileDrawer" class="mobile-drawer">
+            <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-light); letter-spacing: 0.5px; margin-top: 4px;">
+                Donors &amp; Matching
+            </div>
             <a href="{{ url_for('donors_page') }}" class="nav-link"><i class="fa-solid fa-magnifying-glass"></i> Find Donors</a>
-            <a href="{{ url_for('urgent_needs_page') }}" class="nav-link"><i class="fa-solid fa-truck-medical"></i> Urgent Needs ({{ active_urgent_count }})</a>
-            <a href="{{ url_for('blood_banks_page') }}" class="nav-link"><i class="fa-solid fa-hospital"></i> Blood Banks & Items</a>
-            <a href="{{ url_for('availability_and_needs') }}" class="nav-link" style="color: #059669; font-weight: 700;"><i class="fa-solid fa-chart-pie"></i> Availability vs Needs</a>
+            <a href="{{ url_for('register_donor') }}" class="nav-link"><i class="fa-solid fa-user-plus"></i> Register as a Donor</a>
             <a href="{{ url_for('compatibility_page') }}" class="nav-link"><i class="fa-solid fa-dna"></i> Compatibility Matrix</a>
-            <a href="{{ url_for('project_report') }}" target="_blank" class="nav-link"><i class="fa-solid fa-file-pdf"></i> Academic Project Report</a>
+
+            <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-light); letter-spacing: 0.5px; margin-top: 10px;">
+                Emergencies &amp; Inventory
+            </div>
+            <a href="{{ url_for('urgent_needs_page') }}" class="nav-link"><i class="fa-solid fa-truck-medical"></i> Urgent Needs ({{ active_urgent_count }})</a>
+            <a href="{{ url_for('availability_and_needs') }}" class="nav-link" style="color: #059669; font-weight: 700;"><i class="fa-solid fa-scale-balanced"></i> Availability vs Needs</a>
+            <a href="{{ url_for('blood_banks_page') }}" class="nav-link"><i class="fa-solid fa-hospital"></i> Blood Banks &amp; Items</a>
+            <a href="javascript:void(0)" onclick="openModal('urgentNeedModal')" class="nav-link" style="color: var(--primary); font-weight: 700;"><i class="fa-solid fa-circle-plus"></i> + Post Urgent Need</a>
+            <a href="javascript:void(0)" onclick="openModal('addBloodBankModal')" class="nav-link"><i class="fa-solid fa-plus"></i> + Add Blood Bank</a>
+            <a href="javascript:void(0)" onclick="openModal('addInventoryModal')" class="nav-link"><i class="fa-solid fa-boxes-stacked"></i> + Stock Blood Item</a>
+
+            <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--text-light); letter-spacing: 0.5px; margin-top: 10px;">
+                Documentation
+            </div>
+            <a href="{{ url_for('download_pdf_report') }}" class="nav-link"><i class="fa-solid fa-file-pdf"></i> Download Project Report (PDF)</a>
+            <a href="{{ url_for('project_report') }}" target="_blank" class="nav-link"><i class="fa-solid fa-file-code"></i> Interactive Project Guide</a>
         </div>
     </header>
 
@@ -456,12 +637,30 @@
             }
         }
 
-        // Close modal when clicking backdrop
-        window.onclick = function(e) {
-            if (e.target.classList.contains('modal-backdrop')) {
+        // Dropdown Click & Touch Support
+        document.querySelectorAll('.nav-item').forEach(item => {
+            const btn = item.querySelector('.nav-link');
+            if (btn && item.querySelector('.nav-dropdown-menu')) {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    const isOpen = item.classList.contains('open');
+                    document.querySelectorAll('.nav-item.open').forEach(el => el.classList.remove('open'));
+                    if (!isOpen) {
+                        item.classList.add('open');
+                    }
+                });
+            }
+        });
+
+        // Close dropdowns & modals when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.nav-item')) {
+                document.querySelectorAll('.nav-item.open').forEach(el => el.classList.remove('open'));
+            }
+            if (e.target.classList && e.target.classList.contains('modal-backdrop')) {
                 e.target.classList.remove('open');
             }
-        };
+        });
     </script>
     {% block scripts %}{% endblock %}
 </body>
